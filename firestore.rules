@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Approved users list (read-only for auth'd users, write = admin only via console) ──
+    match /config/allowedUsers {
+      allow read: if request.auth != null;
+      allow write: if false; // manage via Firebase console only
+    }
+
+    // ── Join requests (anyone can create their own, no reads from client) ──
+    match /joinRequests/{email} {
+      allow create: if true;   // unauthenticated users need to submit requests
+      allow read, update, delete: if false; // admin only via console
+    }
+
+    // ── User data — strictly scoped to the owning UID ──
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

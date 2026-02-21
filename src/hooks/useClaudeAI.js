@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DEFAULT_PROFILE_FALLBACKS } from '../store/useProfileStore'
 
 export function useClaudeAI() {
   const [loading, setLoading] = useState(false)
@@ -14,7 +15,10 @@ export function useClaudeAI() {
         ? 'Organise exercises into supersets where appropriate (pair antagonist or complementary movements back-to-back). Label superset pairs in the exercise notes field with "Superset with: <partner exercise name>".'
         : 'Do not use supersets; list exercises as straight sets.'
 
-      const userMessage = `Create a ${userProfile.daysPerWeek || 4}-day workout plan for a ${userProfile.fitnessLevel || 'intermediate'} with goal: ${userProfile.goal || 'muscle_gain'}. Equipment: ${userProfile.equipment?.join(', ') || 'Barbell, Dumbbells'}. Split: ${userProfile.splitPreference || 'push_pull_legs'}. Session length: ${userProfile.sessionLength || '60'} minutes. ${supersetsLine}
+      // Merge user profile with fallbacks so the AI always gets valid values
+      const p = { ...DEFAULT_PROFILE_FALLBACKS, ...userProfile }
+
+      const userMessage = `Create a ${p.daysPerWeek || 4}-day workout plan for a ${p.fitnessLevel} with goal: ${p.goal}. Equipment: ${Array.isArray(p.equipment) && p.equipment.length ? p.equipment.join(', ') : 'Barbell, Dumbbells'}. Split: ${p.splitPreference}. Session length: ${p.sessionLength || '60'} minutes. ${supersetsLine}
 
 Return JSON in this exact format:
 {
@@ -36,14 +40,10 @@ Return JSON in this exact format:
   ]
 }`
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      // Call our Vercel serverless proxy — keeps the API key off the browser
+      const response = await fetch('/api/claude', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-5',
           max_tokens: 2000,
