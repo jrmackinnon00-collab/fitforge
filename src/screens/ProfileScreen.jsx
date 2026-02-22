@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
 import useProfileStore from '../store/useProfileStore'
 import useThemeStore from '../store/useThemeStore'
-import { LogOut, Moon, Sun, ChevronRight, User } from 'lucide-react'
+import { useGamification } from '../hooks/useGamification'
+import { getRankForPoints } from '../data/ranks'
+import { LogOut, Moon, Sun, ChevronRight, User, Trophy } from 'lucide-react'
 
 const FITNESS_LEVELS = ['beginner', 'intermediate', 'advanced']
 const GOALS = [
@@ -31,6 +34,8 @@ function ProfileScreen() {
   const { user } = useAuthStore()
   const { profile, updateProfile, setProfile } = useProfileStore()
   const { isDark, toggleTheme } = useThemeStore()
+  const navigate = useNavigate()
+  const { gamification } = useGamification(user?.uid)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -104,13 +109,43 @@ function ProfileScreen() {
               <User size={28} className="text-orange-500" />
             </div>
           )}
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white truncate">
               {user?.displayName || 'Athlete'}
             </h2>
-            <p className="text-slate-400 text-sm">{user?.email}</p>
+            <p className="text-slate-400 text-sm truncate">{user?.email}</p>
+            {/* Rank badge */}
+            {gamification && (() => {
+              const rank = getRankForPoints(gamification.totalPoints || 0)
+              return (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-base leading-none">{rank.icon}</span>
+                  <span className="text-xs font-semibold text-orange-500">{rank.title}</span>
+                  <span className="text-xs text-slate-400">
+                    · {(gamification.totalPoints || 0).toLocaleString()} FP
+                  </span>
+                </div>
+              )
+            })()}
           </div>
         </div>
+
+        {/* Achievements quick link */}
+        <button
+          onClick={() => navigate('/dashboard/achievements')}
+          className="mt-4 w-full flex items-center justify-between py-3 px-4 rounded-xl bg-orange-500/8 dark:bg-orange-500/10 border border-orange-500/20 active:scale-95 transition-all"
+        >
+          <div className="flex items-center gap-2">
+            <Trophy size={16} className="text-orange-500" />
+            <span className="text-orange-500 font-semibold text-sm">My Achievements</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-orange-400 text-xs font-medium">
+              {gamification?.earnedBadges?.length || 0} badges
+            </span>
+            <ChevronRight size={14} className="text-orange-400" />
+          </div>
+        </button>
       </div>
 
       {/* App Preferences */}

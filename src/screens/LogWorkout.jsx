@@ -5,6 +5,10 @@ import { db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
 import useProfileStore from '../store/useProfileStore'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { FPToast } from '../components/FPToast'
+import { BadgeUnlockModal } from '../components/BadgeUnlockModal'
+import { RankUpModal } from '../components/RankUpModal'
+import { useGamification } from '../hooks/useGamification'
 import { Plus, ChevronDown, ChevronUp, Check, Clock, Calendar, Info, X } from 'lucide-react'
 
 // ─── RPE Info Popover ─────────────────────────────────────────────────────────
@@ -103,6 +107,7 @@ function LogWorkout() {
   const navigate = useNavigate()
   const startTimeRef = useRef(Date.now())
   const dateInputRef = useRef(null)
+  const { processSession } = useGamification(user?.uid)
 
   const [date, setDate] = useState(todayLocal())
   const [plans, setPlans] = useState([])
@@ -116,6 +121,13 @@ function LogWorkout() {
   const [previousPerformance, setPreviousPerformance] = useState({})
   const [elapsedMinutes, setElapsedMinutes] = useState(0)
   const [showRPEInfo, setShowRPEInfo] = useState(false)
+
+  // Gamification reward state
+  const [fpEvents, setFpEvents] = useState([])
+  const [pendingBadges, setPendingBadges] = useState([])
+  const [rankUpData, setRankUpData] = useState(null)
+  const [showBadgeModal, setShowBadgeModal] = useState(false)
+  const [showRankModal, setShowRankModal] = useState(false)
 
   useEffect(() => {
     if (user) fetchPlans()
@@ -242,12 +254,77 @@ function LogWorkout() {
       }
 
       await addDoc(collection(db, 'users', user.uid, 'sessions'), sessionData)
-      navigate('/dashboard')
+
+      // ── Gamification engine ──────────────────────────────────────────────────
+      let hasBadgeModal = false
+      let hasRankModal  = false
+      let hasToasts     = false
+      try {
+        const rewards = await processSession(sessionData, selectedPlan, profile)
+        if (rewards) {
+          const { fpEvents: events, newBadges, rankUp } = rewards
+
+          // FP toasts — shown while still on this screen
+          if (events?.length) {
+            setFpEvents(events)
+            hasToasts = true
+          }
+
+          // Badge modal — stays on LogWorkout until user dismisses
+          if (newBadges?.length) {
+            setPendingBadges(newBadges)
+            setShowBadgeModal(true)
+            hasBadgeModal = true
+          }
+
+          // Rank-up modal — after badges, or immediately if no badges
+          if (rankUp) {
+            setRankUpData(rankUp)
+            hasRankModal = true
+            if (!newBadges?.length) setShowRankModal(true)
+          }
+        }
+      } catch (gamErr) {
+        // Gamification errors should never block the workout save
+        console.error('Gamification error:', gamErr)
+      }
+
+      // If modals are showing, they handle their own navigation when closed.
+      // If only toasts (no modals), handleToastsDone will navigate when finished.
+      // If no rewards at all, navigate immediately.
+      if (!hasBadgeModal && !hasRankModal && !hasToasts) {
+        navigate('/dashboard')
+      }
     } catch (err) {
       console.error('Error saving session:', err)
       alert('Error saving workout. Please try again.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Called when badge modal closes — show rank-up if pending, else navigate
+  const handleBadgeModalClose = () => {
+    setShowBadgeModal(false)
+    if (rankUpData) {
+      setShowRankModal(true)
+    } else {
+      navigate('/dashboard')
+    }
+  }
+
+  // Called when rank-up modal closes
+  const handleRankModalClose = () => {
+    setShowRankModal(false)
+    navigate('/dashboard')
+  }
+
+  // Called when all FP toasts have cycled through
+  // If no modals are showing, navigate to dashboard now
+  const handleToastsDone = () => {
+    setFpEvents([])
+    if (!showBadgeModal && !showRankModal) {
+      navigate('/dashboard')
     }
   }
 
@@ -523,6 +600,20 @@ function LogWorkout() {
 
       {/* RPE Info Sheet */}
       {showRPEInfo && <RPEPopover onClose={() => setShowRPEInfo(false)} />}
+
+      {/* ── Gamification overlays ─────────────────────────────────────────── */}
+      {/* FP toasts — appear bottom of screen during save */}
+      <FPToast events={fpEvents} onDone={handleToastsDone} />
+
+      {/* Badge unlock modal */}
+      {showBadgeModal && (
+        <BadgeUnlockModal badges={pendingBadges} onClose={handleBadgeModalClose} />
+      )}
+
+      {/* Rank-up modal */}
+      {showRankModal && (
+        <RankUpModal rank={rankUpData} onClose={handleRankModalClose} />
+      )}
     </div>
   )
 }

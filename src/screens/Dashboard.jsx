@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, query, orderBy, limit, getDocs, where, Timestamp } from 'firebase/firestore'
+import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
 import StatCard from '../components/StatCard'
 import LoadingSpinner from '../components/LoadingSpinner'
+import RankCard from '../components/RankCard'
+import { useGamification } from '../hooks/useGamification'
 import { Dumbbell, Calendar, Flame, Trophy, Play } from 'lucide-react'
 
 function Dashboard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const { gamification } = useGamification(user?.uid)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalWorkouts: 0,
@@ -163,6 +166,14 @@ function Dashboard() {
           color="red"
         />
       </div>
+
+      {/* Rank Card */}
+      {gamification && (
+        <RankCard
+          gamification={gamification}
+          onViewAll={() => navigate('/dashboard/achievements')}
+        />
+      )}
 
       {/* Quick Start Button */}
       <button
