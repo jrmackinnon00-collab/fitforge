@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { name, email, message } = req.body || {}
+  const { name, email, uid, message } = req.body || {}
 
   if (!email || !email.includes('@')) {
     return res.status(400).json({ error: 'Valid email is required' })
@@ -44,15 +44,16 @@ export default async function handler(req, res) {
           <h2>New FitForge Access Request</h2>
           <p><strong>Name:</strong> ${name || '(not provided)'}</p>
           <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Firebase UID:</strong> <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px">${uid || '(not available)'}</code></p>
           ${message ? `<p><strong>Message:</strong> ${message}</p>` : ''}
           <hr />
-          <p>To approve this person:</p>
+          <h3>To approve this person:</h3>
           <ol>
-            <li>Have them sign in with Google using this email address</li>
-            <li>Get their Firebase UID from the Firebase Console → Authentication</li>
-            <li>Add their UID to <code>Firestore → config → allowedUsers → uids</code> array</li>
+            <li>Go to <strong>Firebase Console → Firestore → config → allowedUsers</strong></li>
+            <li>Add the UID above to the <code>uids</code> array</li>
+            <li>They can now sign in immediately — no further action needed</li>
           </ol>
-          <p>To deny, simply do nothing — their request will remain pending.</p>
+          <p style="color:#888">To deny, simply do nothing — their request will remain pending.</p>
         `,
       }),
     })

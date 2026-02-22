@@ -35,10 +35,12 @@ function LoginScreen({ accessDenied = false }) {
   const [googleLoading, setGoogleLoading] = useState(false)
 
   // ── Request-access form ────────────────────────────────────────────────
-  const [reqName, setReqName]       = useState('')
-  const [reqEmail, setReqEmail]     = useState('')
-  const [reqMessage, setReqMessage] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [reqName, setReqName]         = useState('')
+  const [reqEmail, setReqEmail]       = useState('')
+  const [reqPassword, setReqPassword] = useState('')
+  const [reqShowPw, setReqShowPw]     = useState(false)
+  const [reqMessage, setReqMessage]   = useState('')
+  const [submitting, setSubmitting]   = useState(false)
   const [submitError, setSubmitError] = useState(null)
 
   // ── Password reset ─────────────────────────────────────────────────────
@@ -128,34 +130,66 @@ function LoginScreen({ accessDenied = false }) {
 
   const handleRequestAccess = async (e) => {
     e.preventDefault()
+    setSubmitError(null)
     if (!reqEmail.trim() || !reqEmail.includes('@')) {
       setSubmitError('Please enter a valid email address.')
       return
     }
+    if (reqPassword.length < 6) {
+      setSubmitError('Password must be at least 6 characters.')
+      return
+    }
     setSubmitting(true)
-    setSubmitError(null)
     try {
-      // Use email (dots replaced) as the document key so duplicate requests
-      // just overwrite silently. We can't read first — Firestore rules only
-      // allow `create`, not `read`, on joinRequests.
-      const emailKey = reqEmail.trim().toLowerCase().replace(/\./g, '_')
+      // 1. Create the Firebase Auth account so they get a UID immediately.
+      //    App.jsx will see them as not-allowlisted and show PENDING view.
+      let uid = null
+      try {
+        const cred = await createUserWithEmailAndPassword(
+          auth,
+          reqEmail.trim().toLowerCase(),
+          reqPassword,
+        )
+        uid = cred.user.uid
+      } catch (authErr) {
+        if (authErr.code === 'auth/email-already-in-use') {
+          setSubmitError('An account with this email already exists. Try signing in instead.')
+          return
+        }
+        if (authErr.code === 'auth/invalid-email') {
+          setSubmitError('Please enter a valid email address.')
+          return
+        }
+        // If auth account creation fails for any other reason, still save
+        // the join request without a UID so you're at least notified.
+        console.error('Auth creation error during request:', authErr)
+      }
+
+      // 2. Save join request to Firestore (includes UID for easy allowlisting)
+      const emailKey = reqEmail.trim().toLowerCase().replace(/[.@]/g, '_')
       await setDoc(doc(db, 'joinRequests', emailKey), {
         name: reqName.trim() || '',
         email: reqEmail.trim().toLowerCase(),
+        uid: uid || '',
         message: reqMessage.trim() || '',
         status: 'pending',
         requestedAt: serverTimestamp(),
       })
+
+      // 3. Fire-and-forget email notification to owner
       fetch('/api/request-access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: reqName.trim(),
           email: reqEmail.trim().toLowerCase(),
+          uid: uid || '(not available)',
           message: reqMessage.trim(),
         }),
       }).catch(() => {})
-      setView(VIEW.PENDING)
+
+      // App.jsx will detect the new (unapproved) auth user and show the
+      // accessDenied / PENDING view automatically — no manual view switch needed.
     } catch (err) {
       console.error('Request access error:', err)
       setSubmitError('Something went wrong. Please try again.')
@@ -438,8 +472,31 @@ function LoginScreen({ accessDenied = false }) {
                   required
                   className={inputCls}
                 />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1.5">
+                  Create a Password <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={reqShowPw ? 'text' : 'password'}
+                    value={reqPassword}
+                    onChange={(e) => setReqPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                    autoComplete="new-password"
+                    className={inputCls + ' pr-12'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setReqShowPw(!reqShowPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs font-medium px-1"
+                  >
+                    {reqShowPw ? 'Hide' : 'Show'}
+                  </button>
+                </div>
                 <p className="text-slate-600 text-xs mt-1">
-                  Use the email you'll sign in with (Google or email/password)
+                  You'll use this email + password to sign in once approved.
                 </p>
               </div>
 
