@@ -5,7 +5,7 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, googleProvider, db } from '../firebase'
 
 // Top-level views
@@ -135,17 +135,17 @@ function LoginScreen({ accessDenied = false }) {
     setSubmitting(true)
     setSubmitError(null)
     try {
+      // Use email (dots replaced) as the document key so duplicate requests
+      // just overwrite silently. We can't read first — Firestore rules only
+      // allow `create`, not `read`, on joinRequests.
       const emailKey = reqEmail.trim().toLowerCase().replace(/\./g, '_')
-      const existing = await getDoc(doc(db, 'joinRequests', emailKey))
-      if (!existing.exists()) {
-        await setDoc(doc(db, 'joinRequests', emailKey), {
-          name: reqName.trim() || '',
-          email: reqEmail.trim().toLowerCase(),
-          message: reqMessage.trim() || '',
-          status: 'pending',
-          requestedAt: serverTimestamp(),
-        })
-      }
+      await setDoc(doc(db, 'joinRequests', emailKey), {
+        name: reqName.trim() || '',
+        email: reqEmail.trim().toLowerCase(),
+        message: reqMessage.trim() || '',
+        status: 'pending',
+        requestedAt: serverTimestamp(),
+      })
       fetch('/api/request-access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

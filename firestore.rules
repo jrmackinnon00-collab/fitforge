@@ -8,10 +8,10 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // ── Join requests (anyone can create their own, no reads from client) ──
+    // ── Join requests (anyone can write their own request, no reads/deletes) ──
     match /joinRequests/{email} {
-      allow create: if true;
-      allow read, update, delete: if false;
+      allow create, update: if true;
+      allow read, delete: if false;
     }
 
     // ── User data — strictly scoped to the owning UID ──
