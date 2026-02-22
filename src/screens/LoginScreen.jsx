@@ -1,45 +1,131 @@
 import { useState } from 'react'
-import { signInWithPopup } from 'firebase/auth'
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from 'firebase/auth'
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, googleProvider, db } from '../firebase'
 
-// Three views this screen can show
+// Top-level views
 const VIEW = {
-  LOGIN: 'login',       // default — sign in with Google
+  LOGIN:   'login',    // sign-in screen (Google or Email tabs)
   REQUEST: 'request',  // request access form
   PENDING: 'pending',  // submitted / awaiting approval
+  RESET:   'reset',    // forgot password
 }
 
+// Auth method tabs
+const TAB = { GOOGLE: 'google', EMAIL: 'email' }
+
 function LoginScreen({ accessDenied = false }) {
-  const [view, setView] = useState(accessDenied ? VIEW.PENDING : VIEW.LOGIN)
-  const [loading, setLoading] = useState(false)
+  const [view, setView]   = useState(accessDenied ? VIEW.PENDING : VIEW.LOGIN)
+  const [tab, setTab]     = useState(TAB.GOOGLE)
   const [error, setError] = useState(null)
 
-  // Request-access form fields
+  // ── Email/password fields ──────────────────────────────────────────────
+  const [emailInput, setEmailInput]   = useState('')
+  const [password, setPassword]       = useState('')
+  const [isSignUp, setIsSignUp]       = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  // ── Google sign-in ─────────────────────────────────────────────────────
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  // ── Request-access form ────────────────────────────────────────────────
   const [reqName, setReqName]       = useState('')
   const [reqEmail, setReqEmail]     = useState('')
   const [reqMessage, setReqMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
 
-  // ── Google sign-in ──────────────────────────────────────────────────────
+  // ── Password reset ─────────────────────────────────────────────────────
+  const [resetEmail, setResetEmail]   = useState('')
+  const [resetSent, setResetSent]     = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetError, setResetError]   = useState(null)
+
+  // ── Handlers ───────────────────────────────────────────────────────────
+
   const handleGoogleSignIn = async () => {
-    setLoading(true)
+    setGoogleLoading(true)
     setError(null)
     try {
       await signInWithPopup(auth, googleProvider)
-      // App.jsx onAuthStateChanged will handle redirect or show access-denied
     } catch (err) {
-      console.error('Sign in error:', err)
       if (err.code !== 'auth/popup-closed-by-user') {
-        setError('Failed to sign in. Please try again.')
+        setError('Failed to sign in with Google. Please try again.')
       }
     } finally {
-      setLoading(false)
+      setGoogleLoading(false)
     }
   }
 
-  // ── Request access ───────────────────────────────────────────────────────
+  const handleEmailAuth = async (e) => {
+    e.preventDefault()
+    setError(null)
+    if (!emailInput.trim() || !password) {
+      setError('Please enter your email and password.')
+      return
+    }
+    if (isSignUp && password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+    setEmailLoading(true)
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, emailInput.trim(), password)
+      } else {
+        await signInWithEmailAndPassword(auth, emailInput.trim(), password)
+      }
+      // App.jsx onAuthStateChanged handles redirect / allowlist check
+    } catch (err) {
+      console.error('Email auth error:', err)
+      switch (err.code) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          setError('Incorrect email or password.')
+          break
+        case 'auth/email-already-in-use':
+          setError('An account with this email already exists. Try signing in instead.')
+          break
+        case 'auth/invalid-email':
+          setError('Please enter a valid email address.')
+          break
+        case 'auth/too-many-requests':
+          setError('Too many attempts. Please wait a moment and try again.')
+          break
+        default:
+          setError('Something went wrong. Please try again.')
+      }
+    } finally {
+      setEmailLoading(false)
+    }
+  }
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault()
+    setResetError(null)
+    if (!resetEmail.trim() || !resetEmail.includes('@')) {
+      setResetError('Please enter a valid email address.')
+      return
+    }
+    setResetLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, resetEmail.trim())
+      setResetSent(true)
+    } catch (err) {
+      console.error('Password reset error:', err)
+      setResetError('Could not send reset email. Check the address and try again.')
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
   const handleRequestAccess = async (e) => {
     e.preventDefault()
     if (!reqEmail.trim() || !reqEmail.includes('@')) {
@@ -48,14 +134,10 @@ function LoginScreen({ accessDenied = false }) {
     }
     setSubmitting(true)
     setSubmitError(null)
-
     try {
       const emailKey = reqEmail.trim().toLowerCase().replace(/\./g, '_')
-
-      // Check if already requested
       const existing = await getDoc(doc(db, 'joinRequests', emailKey))
       if (!existing.exists()) {
-        // Save request to Firestore
         await setDoc(doc(db, 'joinRequests', emailKey), {
           name: reqName.trim() || '',
           email: reqEmail.trim().toLowerCase(),
@@ -64,8 +146,6 @@ function LoginScreen({ accessDenied = false }) {
           requestedAt: serverTimestamp(),
         })
       }
-
-      // Fire-and-forget notification email via our Vercel API route
       fetch('/api/request-access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -74,8 +154,7 @@ function LoginScreen({ accessDenied = false }) {
           email: reqEmail.trim().toLowerCase(),
           message: reqMessage.trim(),
         }),
-      }).catch(() => {}) // silent — email is best-effort
-
+      }).catch(() => {})
       setView(VIEW.PENDING)
     } catch (err) {
       console.error('Request access error:', err)
@@ -85,57 +164,158 @@ function LoginScreen({ accessDenied = false }) {
     }
   }
 
+  // ── Shared input class ─────────────────────────────────────────────────
+  const inputCls = 'w-full bg-slate-800 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-orange-500 focus:outline-none text-sm min-h-[48px] placeholder:text-slate-600'
+
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-6">
-      {/* Background decoration */}
+      {/* Background blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-orange-500 rounded-full opacity-10 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full opacity-10 blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="text-7xl mb-4">🏋️</div>
+
+        {/* Logo — always visible */}
+        <div className="text-center mb-8">
+          <div className="text-7xl mb-3">🏋️</div>
           <h1 className="text-5xl font-black text-white mb-2 tracking-tight">
             Fit<span className="text-orange-500">Forge</span>
           </h1>
           <p className="text-slate-400 text-lg font-medium">Build your best self</p>
         </div>
 
-        {/* ── VIEW: LOGIN ─────────────────────────────────────────────────── */}
+        {/* ── VIEW: LOGIN ──────────────────────────────────────────────────── */}
         {view === VIEW.LOGIN && (
           <>
-            <div className="grid grid-cols-3 gap-3 mb-10">
+            {/* Feature pills */}
+            <div className="grid grid-cols-3 gap-3 mb-8">
               {[
                 { emoji: '📋', label: 'AI Plans' },
                 { emoji: '📊', label: 'Track PRs' },
                 { emoji: '🔥', label: 'Streaks' },
               ].map(({ emoji, label }) => (
-                <div key={label} className="bg-slate-800 rounded-2xl p-4 text-center">
+                <div key={label} className="bg-slate-800 rounded-2xl p-3 text-center">
                   <div className="text-2xl mb-1">{emoji}</div>
                   <p className="text-slate-400 text-xs font-medium">{label}</p>
                 </div>
               ))}
             </div>
 
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-4 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed min-h-[56px] shadow-lg"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-slate-400 border-t-slate-900 rounded-full animate-spin" />
-              ) : (
-                <>
-                  <GoogleLogo />
-                  Sign in with Google
-                </>
-              )}
-            </button>
+            {/* Tab switcher */}
+            <div className="flex bg-slate-800 rounded-2xl p-1 mb-5">
+              <button
+                onClick={() => { setTab(TAB.GOOGLE); setError(null) }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                  tab === TAB.GOOGLE
+                    ? 'bg-white text-slate-900 shadow'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Google
+              </button>
+              <button
+                onClick={() => { setTab(TAB.EMAIL); setError(null) }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                  tab === TAB.EMAIL
+                    ? 'bg-white text-slate-900 shadow'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Email
+              </button>
+            </div>
 
+            {/* ── Google tab ── */}
+            {tab === TAB.GOOGLE && (
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={googleLoading}
+                className="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-4 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-70 min-h-[56px] shadow-lg"
+              >
+                {googleLoading ? (
+                  <div className="w-5 h-5 border-2 border-slate-400 border-t-slate-900 rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <GoogleLogo />
+                    Sign in with Google
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* ── Email tab ── */}
+            {tab === TAB.EMAIL && (
+              <form onSubmit={handleEmailAuth} className="space-y-3">
+                <input
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder="Email address"
+                  autoComplete="email"
+                  className={inputCls}
+                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                    className={inputCls + ' pr-12'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs font-medium px-1"
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+
+                {!isSignUp && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetEmail(emailInput)
+                        setResetSent(false)
+                        setResetError(null)
+                        setView(VIEW.RESET)
+                      }}
+                      className="text-slate-500 hover:text-orange-400 text-xs transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={emailLoading}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-2xl transition-all active:scale-95 disabled:opacity-70 min-h-[56px]"
+                >
+                  {emailLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin mx-auto" />
+                  ) : isSignUp ? 'Create Account' : 'Sign In'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setIsSignUp(!isSignUp); setError(null) }}
+                  className="w-full py-2 text-slate-500 hover:text-slate-300 text-sm transition-colors"
+                >
+                  {isSignUp
+                    ? 'Already have an account? Sign in'
+                    : "Don't have an account? Create one"}
+                </button>
+              </form>
+            )}
+
+            {/* Shared error */}
             {error && (
-              <div className="mt-4 p-3 bg-red-900/30 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
+              <div className="mt-3 p-3 bg-red-900/30 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
                 {error}
               </div>
             )}
@@ -153,13 +333,76 @@ function LoginScreen({ accessDenied = false }) {
               Request Access
             </button>
 
-            <p className="text-center text-slate-600 text-xs mt-8">
+            <p className="text-center text-slate-600 text-xs mt-6">
               By signing in, you agree to our Terms of Service
             </p>
           </>
         )}
 
-        {/* ── VIEW: REQUEST ACCESS FORM ───────────────────────────────────── */}
+        {/* ── VIEW: FORGOT PASSWORD ─────────────────────────────────────────── */}
+        {view === VIEW.RESET && (
+          <>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-white mb-1">Reset Password</h2>
+              <p className="text-slate-400 text-sm">
+                Enter your email and we'll send you a link to reset your password.
+              </p>
+            </div>
+
+            {resetSent ? (
+              <div className="text-center">
+                <div className="text-5xl mb-4">📬</div>
+                <p className="text-white font-semibold mb-2">Check your inbox</p>
+                <p className="text-slate-400 text-sm mb-6">
+                  A password reset link has been sent to <span className="text-orange-400">{resetEmail}</span>.
+                </p>
+                <button
+                  onClick={() => { setView(VIEW.LOGIN); setTab(TAB.EMAIL) }}
+                  className="w-full py-3.5 rounded-2xl border border-slate-700 text-slate-300 hover:border-orange-500 hover:text-orange-400 font-semibold text-sm transition-all active:scale-95"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className={inputCls}
+                  autoFocus
+                />
+
+                {resetError && (
+                  <div className="p-3 bg-red-900/30 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                    {resetError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-2xl transition-all active:scale-95 disabled:opacity-70 min-h-[56px]"
+                >
+                  {resetLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin mx-auto" />
+                  ) : 'Send Reset Link'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setView(VIEW.LOGIN); setTab(TAB.EMAIL) }}
+                  className="w-full py-3 text-slate-500 hover:text-slate-300 text-sm font-medium transition-colors"
+                >
+                  ← Back to Sign In
+                </button>
+              </form>
+            )}
+          </>
+        )}
+
+        {/* ── VIEW: REQUEST ACCESS FORM ─────────────────────────────────────── */}
         {view === VIEW.REQUEST && (
           <>
             <div className="mb-6">
@@ -179,7 +422,7 @@ function LoginScreen({ accessDenied = false }) {
                   value={reqName}
                   onChange={(e) => setReqName(e.target.value)}
                   placeholder="Jane Smith"
-                  className="w-full bg-slate-800 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-orange-500 focus:outline-none text-sm min-h-[48px] placeholder:text-slate-600"
+                  className={inputCls}
                 />
               </div>
 
@@ -193,10 +436,10 @@ function LoginScreen({ accessDenied = false }) {
                   onChange={(e) => setReqEmail(e.target.value)}
                   placeholder="jane@example.com"
                   required
-                  className="w-full bg-slate-800 text-white rounded-xl px-4 py-3 border border-slate-700 focus:border-orange-500 focus:outline-none text-sm min-h-[48px] placeholder:text-slate-600"
+                  className={inputCls}
                 />
                 <p className="text-slate-600 text-xs mt-1">
-                  Use the same email you'll sign in with via Google
+                  Use the email you'll sign in with (Google or email/password)
                 </p>
               </div>
 
@@ -226,9 +469,7 @@ function LoginScreen({ accessDenied = false }) {
               >
                 {submitting ? (
                   <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin mx-auto" />
-                ) : (
-                  'Send Request'
-                )}
+                ) : 'Send Request'}
               </button>
             </form>
 
@@ -241,7 +482,7 @@ function LoginScreen({ accessDenied = false }) {
           </>
         )}
 
-        {/* ── VIEW: PENDING / ACCESS DENIED ──────────────────────────────── */}
+        {/* ── VIEW: PENDING ─────────────────────────────────────────────────── */}
         {view === VIEW.PENDING && (
           <div className="text-center">
             <div className="text-6xl mb-5">⏳</div>
@@ -254,7 +495,7 @@ function LoginScreen({ accessDenied = false }) {
               <ol className="text-slate-300 text-sm space-y-2">
                 <li className="flex gap-2"><span className="text-orange-500 font-bold shrink-0">1.</span> The owner reviews your request</li>
                 <li className="flex gap-2"><span className="text-orange-500 font-bold shrink-0">2.</span> If approved, you'll receive an email</li>
-                <li className="flex gap-2"><span className="text-orange-500 font-bold shrink-0">3.</span> Come back and sign in with Google</li>
+                <li className="flex gap-2"><span className="text-orange-500 font-bold shrink-0">3.</span> Come back and sign in with Google or email</li>
               </ol>
             </div>
             <button
@@ -265,12 +506,12 @@ function LoginScreen({ accessDenied = false }) {
             </button>
           </div>
         )}
+
       </div>
     </div>
   )
 }
 
-// Inline Google G logo so we don't need an extra import
 function GoogleLogo() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24">
