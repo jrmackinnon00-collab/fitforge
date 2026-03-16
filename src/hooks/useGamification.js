@@ -234,10 +234,11 @@ export function useGamification(uid) {
     const daysSinceLast = daysBetween(lastActive, sessionDate)
     const gapReturn = lastActive && daysSinceLast >= 14
 
-    if (!lastActive || daysSinceLast >= 2) {
-      // Reset or start streak
+    if (!lastActive || daysSinceLast > 3) {
+      // Reset or start streak (gap of more than 3 days breaks it)
       gam.streakData.currentStreakDays = 1
-    } else if (daysSinceLast === 1) {
+    } else if (daysSinceLast >= 1) {
+      // Continue streak — gap of 1–3 days keeps it going
       gam.streakData.currentStreakDays += 1
     }
     // Same day — no change to streak

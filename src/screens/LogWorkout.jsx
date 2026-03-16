@@ -9,7 +9,84 @@ import { FPToast } from '../components/FPToast'
 import { BadgeUnlockModal } from '../components/BadgeUnlockModal'
 import { RankUpModal } from '../components/RankUpModal'
 import { useGamification } from '../hooks/useGamification'
-import { Plus, ChevronDown, ChevronUp, Check, Clock, Calendar, Info, X } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Check, Clock, Calendar, Info, X, Youtube } from 'lucide-react'
+import { exercises as exerciseLibrary } from '../data/exercises'
+
+// ─── Exercise library lookup (mirrors PlanEditor) ─────────────────────────────
+function findLibraryEntry(exerciseName) {
+  if (!exerciseName) return null
+  const needle = exerciseName.toLowerCase().trim()
+  let found = exerciseLibrary.find((e) => e.name.toLowerCase() === needle)
+  if (found) return found
+  found = exerciseLibrary.find((e) => e.name.toLowerCase().includes(needle))
+  if (found) return found
+  found = exerciseLibrary.find((e) => needle.includes(e.name.toLowerCase()))
+  if (found) return found
+  const words = needle.split(/\s+/).filter(Boolean)
+  if (words.length >= 2) {
+    const tail = words.slice(-2).join(' ')
+    found = exerciseLibrary.find((e) => e.name.toLowerCase().includes(tail))
+    if (found) return found
+  }
+  return null
+}
+
+// ─── Technique Popover ────────────────────────────────────────────────────────
+function TechniquePopover({ exerciseName, onClose }) {
+  const libEntry = findLibraryEntry(exerciseName)
+  if (!libEntry) return null
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end px-4 pb-6 bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md mx-auto bg-slate-800 rounded-3xl p-5 shadow-2xl border border-slate-700"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 pr-3">
+            <h3 className="text-white font-bold text-base">{libEntry.name}</h3>
+            <p className="text-slate-400 text-xs mt-0.5">
+              {libEntry.primaryMuscles.join(' · ')}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-700 text-slate-400 hover:text-white"
+          >
+            <X size={14} />
+          </button>
+        </div>
+        <span
+          className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-3 ${
+            libEntry.type === 'Compound'
+              ? 'bg-orange-500/15 text-orange-400'
+              : 'bg-blue-500/15 text-blue-400'
+          }`}
+        >
+          {libEntry.type}
+        </span>
+        <div className="bg-slate-700/50 rounded-2xl p-4 mb-4">
+          <p className="text-slate-300 text-sm leading-relaxed">
+            {libEntry.techniqueDescription}
+          </p>
+        </div>
+        {libEntry.youtubeUrl && (
+          <a
+            href={libEntry.youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-2xl font-semibold text-sm transition-colors active:scale-95"
+          >
+            <Youtube size={18} />
+            Watch Demo on YouTube
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // ─── RPE Info Popover ─────────────────────────────────────────────────────────
 const RPE_SCALE = [
@@ -121,6 +198,7 @@ function LogWorkout() {
   const [previousPerformance, setPreviousPerformance] = useState({})
   const [elapsedMinutes, setElapsedMinutes] = useState(0)
   const [showRPEInfo, setShowRPEInfo] = useState(false)
+  const [techniqueExercise, setTechniqueExercise] = useState(null)
 
   // Gamification reward state
   const [fpEvents, setFpEvents] = useState([])
@@ -453,6 +531,31 @@ function LogWorkout() {
                     </p>
                   )}
                 </div>
+                <div className="flex items-center gap-1">
+                  {/* Technique info button */}
+                  {findLibraryEntry(exercise.name) && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setTechniqueExercise(exercise.name) }}
+                      className="w-8 h-8 flex items-center justify-center text-blue-400 hover:text-blue-300 transition-colors"
+                      title="Form tips"
+                    >
+                      <Info size={15} />
+                    </button>
+                  )}
+                  {/* YouTube link */}
+                  {findLibraryEntry(exercise.name)?.youtubeUrl && (
+                    <a
+                      href={findLibraryEntry(exercise.name).youtubeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-300 transition-colors"
+                      title="Watch on YouTube"
+                    >
+                      <Youtube size={15} />
+                    </a>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   {/* Completed-sets badge */}
                   <span
@@ -526,12 +629,21 @@ function LogWorkout() {
                         type="number"
                         inputMode="numeric"
                         value={set.rpe}
-                        onChange={(e) =>
-                          updateSet(
-                            exIndex, setIndex, 'rpe',
-                            Math.min(10, Math.max(1, parseInt(e.target.value) || 1))
-                          )
-                        }
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          if (raw === '') {
+                            updateSet(exIndex, setIndex, 'rpe', '')
+                          } else {
+                            const num = parseInt(raw)
+                            if (!isNaN(num)) {
+                              updateSet(exIndex, setIndex, 'rpe', Math.min(10, Math.max(1, num)))
+                            }
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value)
+                          updateSet(exIndex, setIndex, 'rpe', isNaN(val) ? 7 : Math.min(10, Math.max(1, val)))
+                        }}
                         min={1}
                         max={10}
                         className="col-span-2 w-full bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg px-1 py-2 text-sm text-center border border-slate-200 dark:border-slate-600 focus:border-orange-500 focus:outline-none min-h-[40px]"
@@ -600,6 +712,14 @@ function LogWorkout() {
 
       {/* RPE Info Sheet */}
       {showRPEInfo && <RPEPopover onClose={() => setShowRPEInfo(false)} />}
+
+      {/* Technique Popover */}
+      {techniqueExercise && (
+        <TechniquePopover
+          exerciseName={techniqueExercise}
+          onClose={() => setTechniqueExercise(null)}
+        />
+      )}
 
       {/* ── Gamification overlays ─────────────────────────────────────────── */}
       {/* FP toasts — appear bottom of screen during save */}

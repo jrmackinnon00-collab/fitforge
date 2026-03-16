@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { collection, getDocs, orderBy, query, deleteDoc, doc } from 'firebase/firestore'
 import { db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
 import useProfileStore from '../store/useProfileStore'
@@ -7,6 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
+import { Trash2 } from 'lucide-react'
 import CalendarHeatmap from 'react-calendar-heatmap'
 import 'react-calendar-heatmap/dist/styles.css'
 
@@ -36,6 +37,17 @@ function Progress() {
       console.error('Error fetching sessions:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const deleteSession = async (sessionId) => {
+    if (!window.confirm('Delete this workout? This cannot be undone.')) return
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'sessions', sessionId))
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId))
+    } catch (err) {
+      console.error('Error deleting session:', err)
+      alert('Failed to delete workout. Please try again.')
     }
   }
 
@@ -84,23 +96,24 @@ function Progress() {
     return Object.entries(byDate).map(([date, count]) => ({ date, count }))
   }, [sessions])
 
-  // Streak
+  // Streak — continued if gap between workout days is ≤ 3 days
   const streak = useMemo(() => {
     const dates = [...new Set(sessions.map((s) => s.date))].sort(
       (a, b) => new Date(b) - new Date(a)
     )
     if (!dates.length) return 0
     const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
-    let check = dates[0] === today || dates[0] === yesterday ? dates[0] : null
-    if (!check) return 0
-    let count = 0
-    for (const d of dates) {
-      if (d === check) {
+    const daysSinceLatest = Math.round(
+      (new Date(today) - new Date(dates[0])) / 86400000
+    )
+    if (daysSinceLatest > 3) return 0
+    let count = 1
+    for (let i = 0; i < dates.length - 1; i++) {
+      const gap = Math.round(
+        (new Date(dates[i]) - new Date(dates[i + 1])) / 86400000
+      )
+      if (gap <= 3) {
         count++
-        const prev = new Date(check)
-        prev.setDate(prev.getDate() - 1)
-        check = prev.toISOString().split('T')[0]
       } else break
     }
     return count
@@ -281,6 +294,45 @@ function Progress() {
               })}
             />
           </div>
+
+          {/* Workout History */}
+          {sessions.length > 0 && (
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white mb-3">
+                Workout History
+              </h2>
+              <div className="space-y-2">
+                {[...sessions].reverse().map((session) => (
+                  <div
+                    key={session.id}
+                    className="bg-white dark:bg-slate-800 rounded-2xl px-4 py-3 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                        {session.planName || 'Workout'}{session.dayLabel ? ` – ${session.dayLabel}` : ''}
+                      </p>
+                      <p className="text-slate-400 text-xs">
+                        {session.date
+                          ? new Date(session.date).toLocaleDateString('en-US', {
+                              weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+                            })
+                          : ''}
+                        {session.duration ? ` · ${session.duration} min` : ''}
+                        {session.exercises?.length ? ` · ${session.exercises.length} exercise${session.exercises.length !== 1 ? 's' : ''}` : ''}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => deleteSession(session.id)}
+                      className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      title="Delete workout"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

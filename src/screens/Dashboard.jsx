@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore'
+import { collection, query, orderBy, limit, getDocs, where, deleteDoc, doc } from 'firebase/firestore'
 import { db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
+import useProfileStore from '../store/useProfileStore'
 import StatCard from '../components/StatCard'
 import LoadingSpinner from '../components/LoadingSpinner'
 import RankCard from '../components/RankCard'
 import { useGamification } from '../hooks/useGamification'
-import { Dumbbell, Calendar, Flame, Trophy, Play } from 'lucide-react'
+import { Dumbbell, Calendar, Flame, Trophy, Play, Trash2, TrendingUp } from 'lucide-react'
 
 function Dashboard() {
   const { user } = useAuthStore()
+  const { profile } = useProfileStore()
   const navigate = useNavigate()
   const { gamification } = useGamification(user?.uid)
   const [loading, setLoading] = useState(true)
@@ -82,22 +84,34 @@ function Dashboard() {
     }
   }
 
+  const deleteSession = async (sessionId) => {
+    if (!window.confirm('Delete this workout? This cannot be undone.')) return
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'sessions', sessionId))
+      setRecentSessions((prev) => prev.filter((s) => s.id !== sessionId))
+      setStats((prev) => ({ ...prev, totalWorkouts: Math.max(0, prev.totalWorkouts - 1) }))
+    } catch (err) {
+      console.error('Error deleting session:', err)
+      alert('Failed to delete workout. Please try again.')
+    }
+  }
+
   const calculateStreak = (dates) => {
     if (!dates.length) return 0
     const sortedDates = [...new Set(dates)].sort((a, b) => new Date(b) - new Date(a))
-    let streak = 0
     const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
-
-    let checkDate = sortedDates[0] === today || sortedDates[0] === yesterday ? sortedDates[0] : null
-    if (!checkDate) return 0
-
-    for (let i = 0; i < sortedDates.length; i++) {
-      if (sortedDates[i] === checkDate) {
+    // Streak is active only if the most recent workout was within the last 3 days
+    const daysSinceLatest = Math.round(
+      (new Date(today) - new Date(sortedDates[0])) / 86400000
+    )
+    if (daysSinceLatest > 3) return 0
+    let streak = 1
+    for (let i = 0; i < sortedDates.length - 1; i++) {
+      const gap = Math.round(
+        (new Date(sortedDates[i]) - new Date(sortedDates[i + 1])) / 86400000
+      )
+      if (gap <= 3) {
         streak++
-        const prev = new Date(checkDate)
-        prev.setDate(prev.getDate() - 1)
-        checkDate = prev.toISOString().split('T')[0]
       } else {
         break
       }
@@ -167,6 +181,26 @@ function Dashboard() {
         />
       </div>
 
+      {/* Lifetime Volume Tile */}
+      {gamification?.stats?.totalVolumeLbs > 0 && (
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-4 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-100 text-xs font-semibold uppercase tracking-wide mb-1">
+                Lifetime Weight Lifted
+              </p>
+              <p className="text-3xl font-black leading-tight">
+                {Math.round(gamification.stats.totalVolumeLbs).toLocaleString()}
+              </p>
+              <p className="text-orange-200 text-xs mt-0.5">{profile?.weightUnit || 'lbs'} total volume</p>
+            </div>
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+              <TrendingUp size={24} className="text-white" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Rank Card */}
       {gamification && (
         <RankCard
@@ -225,13 +259,22 @@ function Dashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-slate-500 dark:text-slate-400 text-xs">
-                      {formatDate(session.date)}
-                    </p>
-                    {session.duration && (
-                      <p className="text-slate-400 text-xs">{session.duration} min</p>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">
+                        {formatDate(session.date)}
+                      </p>
+                      {session.duration && (
+                        <p className="text-slate-400 text-xs">{session.duration} min</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => deleteSession(session.id)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      title="Delete workout"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </div>
                 {session.exercises && session.exercises.length > 0 && (
