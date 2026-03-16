@@ -185,16 +185,20 @@ function Dashboard() {
           icon={<Calendar size={20} />}
           color="blue"
         />
-        <StatCard
-          title="Active Plan"
-          value={stats.activePlanName}
-          icon={<Trophy size={20} />}
-          color="green"
-          small
-        />
+        {/* Active Plan — tapping navigates to Plans */}
+        <div onClick={() => navigate('/dashboard/plans')} className="cursor-pointer active:scale-95 transition-transform">
+          <StatCard
+            title="Active Plan ›"
+            value={stats.activePlanName}
+            icon={<Trophy size={20} />}
+            color="green"
+            small
+          />
+        </div>
+        {/* Streak — always reads from gamification so it stays in sync with RankCard */}
         <StatCard
           title="Streak"
-          value={`${stats.currentStreak} days`}
+          value={`${gamification?.streakData?.currentStreakDays ?? stats.currentStreak} days`}
           icon={<Flame size={20} />}
           color="red"
         />

@@ -11,7 +11,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   doc, getDoc, setDoc, collection, getDocs,
-  query, orderBy, limit,
+  query, orderBy, limit, where,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { BADGES, BADGE_MAP } from '../data/badges'
@@ -284,7 +284,42 @@ export function useGamification(uid) {
         (gam.stats.bodyweightOnlySessions || 0) + 1
     }
 
-    // ── 7. Repeat session count for Groundhog Gains ─────────────────────────
+    // ── 7. Plan completion detection ────────────────────────────────────────
+    // A plan is "graduated" the first time all of its day indices have been
+    // logged at least once.  We track graduated plan IDs so we never
+    // double-count, and we fetch sessions by planId directly so the 20-session
+    // limit on the perf query doesn't cause false negatives.
+    if (session.planId && plan?.days?.length > 0) {
+      if (!gam.stats.graduatedPlanIds) gam.stats.graduatedPlanIds = []
+      if (!gam.stats.graduatedPlanIds.includes(session.planId)) {
+        try {
+          const planSessionsSnap = await getDocs(
+            query(
+              collection(db, 'users', uid, 'sessions'),
+              where('planId', '==', session.planId)
+            )
+          )
+          const completedDayIndices = new Set()
+          // Include the session being saved right now
+          if (typeof session.dayIndex === 'number') {
+            completedDayIndices.add(session.dayIndex)
+          }
+          for (const sdoc of planSessionsSnap.docs) {
+            const s = sdoc.data()
+            if (s.completedAt === session.completedAt) continue // skip current
+            if (typeof s.dayIndex === 'number') completedDayIndices.add(s.dayIndex)
+          }
+          if (completedDayIndices.size >= plan.days.length) {
+            gam.stats.plansCompleted = (gam.stats.plansCompleted || 0) + 1
+            gam.stats.graduatedPlanIds.push(session.planId)
+          }
+        } catch (err) {
+          console.error('Failed to check plan completion:', err)
+        }
+      }
+    }
+
+    // ── 9. Repeat session count for Groundhog Gains ─────────────────────────
     if (session.planId && session.dayLabel) {
       const key = `${session.planId}_${session.dayLabel}`
       if (!gam.stats.repeatSessions) gam.stats.repeatSessions = {}
@@ -294,7 +329,7 @@ export function useGamification(uid) {
       ? Math.max(...Object.values(gam.stats.repeatSessions))
       : 0
 
-    // ── 8. Perfect week check ────────────────────────────────────────────────
+    // ── 10. Perfect week check ───────────────────────────────────────────────
     const target = profile?.daysPerWeek || gam.weeklySessionTarget || 4
     gam.weeklySessionTarget = target
 
@@ -329,7 +364,7 @@ export function useGamification(uid) {
       (d) => d.startsWith(thisMonth)
     ).length
 
-    // ── 9. Birthday check ────────────────────────────────────────────────────
+    // ── 11. Birthday check ───────────────────────────────────────────────────
     let isBirthday = false
     if (profile?.dateOfBirth) {
       const dob = new Date(profile.dateOfBirth)
@@ -338,7 +373,7 @@ export function useGamification(uid) {
                    dob.getDate()  === now.getDate()
     }
 
-    // ── 10. Calculate FP earned this session ─────────────────────────────────
+    // ── 12. Calculate FP earned this session ────────────────────────────────
     const fpEvents = []
     let sessionFP = 0
 
@@ -397,7 +432,7 @@ export function useGamification(uid) {
       gam.stats.profileSetupAwarded = true
     }
 
-    // ── 11. Update total points ───────────────────────────────────────────────
+    // ── 13. Update total points ──────────────────────────────────────────────
     const previousPoints = gam.totalPoints || 0
     gam.totalPoints = previousPoints + sessionFP
 
@@ -407,13 +442,13 @@ export function useGamification(uid) {
       ...fpEvents,
     ].slice(-100)
 
-    // ── 12. Check rank up ─────────────────────────────────────────────────────
+    // ── 14. Check rank up ────────────────────────────────────────────────────
     const previousRank = getRankForPoints(previousPoints)
     const newRank      = getRankForPoints(gam.totalPoints)
     const rankUp = newRank.level > previousRank.level ? newRank : null
     gam.currentRank = newRank.level
 
-    // ── 13. Evaluate badge triggers ──────────────────────────────────────────
+    // ── 15. Evaluate badge triggers ──────────────────────────────────────────
     const alreadyEarned = new Set(gam.earnedBadges.map((b) => b.badgeId))
     const newBadges = []
 
@@ -484,7 +519,7 @@ export function useGamification(uid) {
     checkBadge('triple_threat',  prCount >= 3)
     checkBadge('groundhog_gains', maxRepeatSession >= 5)
 
-    // ── 14. Append new badges to earned list ─────────────────────────────────
+    // ── 16. Append new badges to earned list ────────────────────────────────
     gam.earnedBadges = [...gam.earnedBadges, ...newBadges]
 
     // Re-check rank after badge FP added
@@ -492,7 +527,7 @@ export function useGamification(uid) {
     const finalRankUp = finalRank.level > previousRank.level ? finalRank : rankUp
     gam.currentRank = finalRank.level
 
-    // ── 15. Write to Firestore ────────────────────────────────────────────────
+    // ── 17. Write to Firestore ───────────────────────────────────────────────
     try {
       await setDoc(gamRef(uid), gam)
     } catch (err) {
