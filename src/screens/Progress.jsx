@@ -8,6 +8,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import { Trash2 } from 'lucide-react'
+import WorkoutDetailSheet from '../components/WorkoutDetailSheet'
 import CalendarHeatmap from 'react-calendar-heatmap'
 import 'react-calendar-heatmap/dist/styles.css'
 
@@ -20,6 +21,7 @@ function Progress() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedExercise, setSelectedExercise] = useState('')
+  const [selectedSession, setSelectedSession] = useState(null)
 
   useEffect(() => {
     if (user) fetchSessions()
@@ -305,7 +307,8 @@ function Progress() {
                 {[...sessions].reverse().map((session) => (
                   <div
                     key={session.id}
-                    className="bg-white dark:bg-slate-800 rounded-2xl px-4 py-3 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3"
+                    onClick={() => setSelectedSession(session)}
+                    className="bg-white dark:bg-slate-800 rounded-2xl px-4 py-3 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 cursor-pointer active:scale-[0.98] transition-transform"
                   >
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
@@ -322,7 +325,7 @@ function Progress() {
                       </p>
                     </div>
                     <button
-                      onClick={() => deleteSession(session.id)}
+                      onClick={(e) => { e.stopPropagation(); deleteSession(session.id) }}
                       className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                       title="Delete workout"
                     >
@@ -521,6 +524,14 @@ function Progress() {
             </div>
           </div>
         </div>
+      )}
+      {/* Workout Detail Sheet */}
+      {selectedSession && (
+        <WorkoutDetailSheet
+          session={selectedSession}
+          unit={unit}
+          onClose={() => setSelectedSession(null)}
+        />
       )}
     </div>
   )

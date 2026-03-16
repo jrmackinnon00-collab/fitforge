@@ -9,6 +9,24 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import RankCard from '../components/RankCard'
 import { useGamification } from '../hooks/useGamification'
 import { Dumbbell, Calendar, Flame, Trophy, Play, Trash2, TrendingUp } from 'lucide-react'
+import WorkoutDetailSheet from '../components/WorkoutDetailSheet'
+
+// ─── Volume comparison helper ─────────────────────────────────────────────────
+// volumeLbs should always be in lbs for threshold comparison.
+// We convert the stored value to lbs if the user's unit is kg.
+function getVolumeComparison(volume, unit) {
+  const volumeLbs = unit === 'kg' ? volume * 2.205 : volume
+  if (volumeLbs >= 1800000) return '🚀 More than a Space Shuttle!'
+  if (volumeLbs >= 900000)  return '✈️ Heavier than a Boeing 747'
+  if (volumeLbs >= 450000)  return '🗽 You\'ve lifted the Statue of Liberty'
+  if (volumeLbs >= 300000)  return '🐳 That\'s a blue whale!'
+  if (volumeLbs >= 100000)  return '🚌 A fully loaded school bus'
+  if (volumeLbs >= 50000)   return '🐘 An African elephant!'
+  if (volumeLbs >= 16000)   return '🚗 A full-size pickup truck'
+  if (volumeLbs >= 6000)    return '🦏 A white rhino!'
+  if (volumeLbs >= 2000)    return '🐂 A big ol\' bull!'
+  return '💪 The journey starts here!'
+}
 
 function Dashboard() {
   const { user } = useAuthStore()
@@ -23,6 +41,7 @@ function Dashboard() {
     currentStreak: 0,
   })
   const [recentSessions, setRecentSessions] = useState([])
+  const [selectedSession, setSelectedSession] = useState(null)
 
   useEffect(() => {
     if (user) {
@@ -182,24 +201,31 @@ function Dashboard() {
       </div>
 
       {/* Lifetime Volume Tile */}
-      {gamification?.stats?.totalVolumeLbs > 0 && (
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-4 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-orange-100 text-xs font-semibold uppercase tracking-wide mb-1">
-                Lifetime Weight Lifted
-              </p>
-              <p className="text-3xl font-black leading-tight">
-                {Math.round(gamification.stats.totalVolumeLbs).toLocaleString()}
-              </p>
-              <p className="text-orange-200 text-xs mt-0.5">{profile?.weightUnit || 'lbs'} total volume</p>
-            </div>
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-              <TrendingUp size={24} className="text-white" />
+      {gamification?.stats?.totalVolumeLbs > 0 && (() => {
+        const unit = profile?.weightUnit || 'lbs'
+        const volume = gamification.stats.totalVolumeLbs
+        return (
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-4 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-xs font-semibold uppercase tracking-wide mb-1">
+                  Lifetime Weight Lifted
+                </p>
+                <p className="text-3xl font-black leading-tight">
+                  {Math.round(volume).toLocaleString()}
+                  <span className="text-lg font-semibold ml-1 text-orange-200">{unit}</span>
+                </p>
+                <p className="text-orange-200 text-xs mt-1">
+                  {getVolumeComparison(volume, unit)}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                <TrendingUp size={24} className="text-white" />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Rank Card */}
       {gamification && (
@@ -243,7 +269,8 @@ function Dashboard() {
             {recentSessions.map((session) => (
               <div
                 key={session.id}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700"
+                onClick={() => setSelectedSession(session)}
+                className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 cursor-pointer active:scale-[0.98] transition-transform"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -269,7 +296,7 @@ function Dashboard() {
                       )}
                     </div>
                     <button
-                      onClick={() => deleteSession(session.id)}
+                      onClick={(e) => { e.stopPropagation(); deleteSession(session.id) }}
                       className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                       title="Delete workout"
                     >
@@ -290,6 +317,15 @@ function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Workout Detail Sheet */}
+      {selectedSession && (
+        <WorkoutDetailSheet
+          session={selectedSession}
+          unit={profile?.weightUnit || 'lbs'}
+          onClose={() => setSelectedSession(null)}
+        />
+      )}
     </div>
   )
 }
