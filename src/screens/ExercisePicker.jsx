@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { exercises } from '../data/exercises'
 import { Search, X, Check, Plus } from 'lucide-react'
 
-const MUSCLE_GROUPS = ['All', 'Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Glutes', 'Core']
+const MUSCLE_GROUPS = ['All', 'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Core']
 const EQUIPMENT_FILTERS = ['All', 'Barbell', 'Dumbbell', 'Cable', 'Machine', 'Bodyweight']
 
 function ExercisePicker({ onSelectMultiple, onClose }) {

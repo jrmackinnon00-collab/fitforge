@@ -11,7 +11,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Stand with feet shoulder-width apart, bar resting on upper traps. Descend until thighs are parallel to floor, keeping chest up and knees tracking over toes.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=ultWZbUMPL8',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+back+squat+proper+form',
   },
   {
     id: 'ex_002',
@@ -22,7 +22,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold bar in front-rack position with elbows high. Descend while keeping torso upright, driving knees out.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=m4ytQ5eybhI',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+front+squat+proper+form',
   },
   {
     id: 'ex_003',
@@ -33,7 +33,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Stand with bar over mid-foot. Hinge at hips, grip bar outside legs, maintain neutral spine, and drive through floor to stand.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=op9kVnSso6Q',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+deadlift+proper+form',
   },
   {
     id: 'ex_004',
@@ -44,7 +44,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold bar at hip level. Hinge at hips pushing them back, lowering bar along legs until you feel a hamstring stretch, then drive hips forward.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=JCXUYuzwNrM',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=romanian+deadlift+proper+form',
   },
   {
     id: 'ex_005',
@@ -55,7 +55,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Lie on bench with feet flat on floor. Grip bar slightly wider than shoulder width. Lower to chest, then press up explosively.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=rT7DgCr-3pg',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+bench+press+proper+form',
   },
   {
     id: 'ex_006',
@@ -66,7 +66,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Set bench to 30-45 degrees. Press bar from upper chest, keeping elbows at 45-75 degrees from torso.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=DbFgADa2PL8',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+incline+bench+press+proper+form',
   },
   {
     id: 'ex_007',
@@ -77,7 +77,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold bar at shoulder height with a grip just outside shoulders. Press overhead to full lockout, keeping core braced.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=2yjwXTZQDDI',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+overhead+press+proper+form',
   },
   {
     id: 'ex_008',
@@ -88,7 +88,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hinge to about 45 degrees. Pull bar to lower chest/upper abdomen, squeezing shoulder blades together at top.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=vT2GjY_Umpw',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+bent+over+row+proper+form',
   },
   {
     id: 'ex_009',
@@ -99,7 +99,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Upper back on bench, bar over hip crease. Drive hips up to full extension, squeezing glutes hard at top.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=xDmFkJxPzeM',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+hip+thrust+proper+form',
   },
   {
     id: 'ex_010',
@@ -110,7 +110,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Stand with bar at arm length, palms up. Curl bar to shoulder height keeping elbows pinned to sides.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=ykJmrZ5v0Oo',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+curl+proper+form',
   },
   {
     id: 'ex_011',
@@ -121,7 +121,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Lie on bench holding bar above eyes. Lower bar toward forehead by bending elbows, then extend back up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=NIyDFy9KOik',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+skull+crusher+proper+form',
   },
   {
     id: 'ex_012',
@@ -132,7 +132,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Wide stance with toes pointed out. Grip bar inside legs, drop hips low, keep chest tall, push floor away.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=0pHsKkZC_Kk',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+sumo+deadlift+proper+form',
   },
   {
     id: 'ex_013',
@@ -143,7 +143,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Bar on upper back, slight knee bend. Hinge forward at hips until torso is near parallel, then return.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=YA-h3n9L4YU',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+good+morning+exercise+form',
   },
   {
     id: 'ex_014',
@@ -154,7 +154,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hold bar at thighs. Shrug shoulders straight up toward ears, pause, lower slowly. No rolling of shoulders.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=g6qbq4Lf1FI',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+shrug+proper+form',
   },
   {
     id: 'ex_015',
@@ -165,7 +165,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Bar on upper back. Step forward into a lunge, lower back knee toward floor, push off front foot to return.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=D7KaRcUTQeE',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=barbell+lunge+proper+form',
   },
 
   // ─────────────────────────────
@@ -180,7 +180,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold dumbbells at chest level. Press up and slightly inward, control descent back to starting position.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=QsYre__-aro',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+bench+press+proper+form',
   },
   {
     id: 'ex_017',
@@ -191,7 +191,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Set bench to 30-45 degrees. Press dumbbells from upper chest, converging slightly at top.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=8iPEnn-ltC8',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+incline+press+proper+form',
   },
   {
     id: 'ex_018',
@@ -202,7 +202,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Lie on bench, arms extended above chest with slight elbow bend. Open arms wide in arc, stretch chest, return.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=eozdVDA78K0',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+fly+proper+form',
   },
   {
     id: 'ex_019',
@@ -213,7 +213,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold dumbbells at shoulder height, elbows at 90 degrees. Press overhead to lockout, lower slowly.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=qEwKCR5JCog',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+shoulder+press+proper+form',
   },
   {
     id: 'ex_020',
@@ -224,7 +224,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hold dumbbells at sides. Raise arms out to sides to shoulder height, leading with elbows, lower slowly.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=3VcKaXpzqRo',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+lateral+raise+proper+form',
   },
   {
     id: 'ex_021',
@@ -235,7 +235,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hold dumbbells in front of thighs. Raise both arms forward to shoulder height, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=Bs6HFKOwPho',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+front+raise+proper+form',
   },
   {
     id: 'ex_022',
@@ -246,7 +246,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hinge forward, hold dumbbells. Row both dumbbells to sides of torso, squeezing shoulder blades together.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=roCP6wCXPqo',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+bent+over+row+proper+form',
   },
   {
     id: 'ex_023',
@@ -257,7 +257,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Plank position on dumbbells. Row one dumbbell to hip while stabilizing with other arm, alternate sides.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=LJMH_J0IbGs',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+renegade+row+proper+form',
   },
   {
     id: 'ex_024',
@@ -268,7 +268,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold dumbbells in front of thighs. Hinge at hips, lowering dumbbells along legs, feel hamstring stretch, return.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=hCDzSR6bW10',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+romanian+deadlift+proper+form',
   },
   {
     id: 'ex_025',
@@ -279,7 +279,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold one dumbbell vertically at chest. Squat deep keeping chest tall, elbows tracking inside knees.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=MxsFDhcyFyE',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+goblet+squat+proper+form',
   },
   {
     id: 'ex_026',
@@ -290,7 +290,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold dumbbells at sides, step forward into lunge, lower back knee, push off front foot to return.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=D7KaRcUTQeE',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+lunge+proper+form',
   },
   {
     id: 'ex_027',
@@ -301,7 +301,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hold dumbbells at sides. Step onto box with one foot, drive through heel to stand up, step down.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=dQqApCGd5Ss',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+step+up+proper+form',
   },
   {
     id: 'ex_028',
@@ -312,7 +312,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hold dumbbells at sides, palms forward. Curl to shoulder height, squeeze biceps, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=sAq_ocpRh_I',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+curl+proper+form',
   },
   {
     id: 'ex_029',
@@ -323,7 +323,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Neutral grip (palms facing each other). Curl dumbbells to shoulder height, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=zC3nLlEvin4',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+hammer+curl+proper+form',
   },
   {
     id: 'ex_030',
@@ -334,7 +334,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Seated, elbow braced on inner thigh. Curl dumbbell to shoulder, squeeze hard, lower slowly.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=Jvj2wV0vOYU',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+concentration+curl+proper+form',
   },
   {
     id: 'ex_031',
@@ -345,7 +345,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hold one dumbbell overhead with both hands. Lower behind head by bending elbows, extend back up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=YbX7Wd8jQ-Q',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+overhead+tricep+extension+proper+form',
   },
   {
     id: 'ex_032',
@@ -356,7 +356,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hinge forward, upper arm parallel to floor. Extend forearm back to full lockout, squeeze tricep.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=6SS6K3lAwZ8',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+kickback+tricep+proper+form',
   },
   {
     id: 'ex_033',
@@ -367,7 +367,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Lie face down on incline bench. Row dumbbells to hips, squeezing shoulder blades, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=MiSGNbIKgSA',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+chest+supported+row+proper+form',
   },
   {
     id: 'ex_034',
@@ -378,7 +378,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Start with palms facing you. Rotate palms outward as you press overhead, reverse on the way down.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=vj2w851ZHRM',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+arnold+press+proper+form',
   },
   {
     id: 'ex_035',
@@ -389,7 +389,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Lie across bench, hold one dumbbell above chest. Lower dumbbell in arc over head, stretch lats, return.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=FK4rHnKOVeE',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dumbbell+pullover+proper+form',
   },
 
   // ─────────────────────────────
@@ -404,7 +404,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Set cables at shoulder height. Stand in center, bring handles together in front of chest in hugging motion.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=taI4XduLpTk',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+chest+fly+proper+form',
   },
   {
     id: 'ex_037',
@@ -415,7 +415,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'High cables. Bring handles down and together crossing at midline, hold squeeze, return controlled.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=taI4XduLpTk',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+crossover+proper+form',
   },
   {
     id: 'ex_038',
@@ -426,7 +426,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Sit with slight forward lean. Pull handle to abdomen squeezing shoulder blades, pause, release with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=GZbfZ033f74',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=seated+cable+row+proper+form',
   },
   {
     id: 'ex_039',
@@ -437,7 +437,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Wide overhand grip. Pull bar to upper chest, leading with elbows, squeeze lats at bottom, control up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=CAwf7n6Luuc',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+lat+pulldown+proper+form',
   },
   {
     id: 'ex_040',
@@ -448,7 +448,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Cable at face height with rope. Pull to face splitting rope, keeping elbows high and flaring out.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=HSoHeSt5fJo',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+face+pull+proper+form',
   },
   {
     id: 'ex_041',
@@ -459,7 +459,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'High cable with bar attachment. Keep elbows pinned at sides, push bar down to full extension, control up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=2-LAMcpzODU',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+tricep+pushdown+proper+form',
   },
   {
     id: 'ex_042',
@@ -470,7 +470,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Face away from cable, rope overhead. Extend arms forward overhead, keeping elbows pointing up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=yLgd3oR9JKA',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+overhead+tricep+extension+proper+form',
   },
   {
     id: 'ex_043',
@@ -481,7 +481,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Low cable with bar. Curl to shoulder height keeping elbows stationary, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=NFzTWp2qpiE',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+curl+bicep+proper+form',
   },
   {
     id: 'ex_044',
@@ -492,7 +492,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Low cable with rope, neutral grip. Curl rope to shoulder height, squeeze, lower slowly.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=yDRtBm6ggI4',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+hammer+curl+proper+form',
   },
   {
     id: 'ex_045',
@@ -503,7 +503,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Low cable to side. Raise arm across body to shoulder height, control the descent.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=PPf9UiRwNyY',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+lateral+raise+proper+form',
   },
   {
     id: 'ex_046',
@@ -514,7 +514,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Low cable behind you. Raise arm forward to shoulder height, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=Bs6HFKOwPho',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+front+raise+proper+form',
   },
   {
     id: 'ex_047',
@@ -525,7 +525,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Face away from cable, rope between legs. Hinge at hips, thrust forward driving glutes, squeeze at top.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=pYcpY20QaE8',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+pull+through+proper+form',
   },
   {
     id: 'ex_048',
@@ -536,7 +536,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Cable at ankle on working leg. Raise leg out to the side, squeeze glute, return with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=DENHLNlhPdk',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+hip+abduction+proper+form',
   },
   {
     id: 'ex_049',
@@ -547,7 +547,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Kneel facing cable machine with rope at neck. Crunch down contracting abs, keep hips stationary.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=2fbujeH3F0E',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+crunch+abs+proper+form',
   },
   {
     id: 'ex_050',
@@ -558,7 +558,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'High cable to side. Pull handle diagonally across body from high to low, rotating torso.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=PH-eDFiVCGE',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+woodchop+proper+form',
   },
   {
     id: 'ex_051',
@@ -569,7 +569,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Cross cables at chest height. Pull handles apart spreading arms wide, squeeze rear delts.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=RVnMbIaAqKo',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+reverse+fly+proper+form',
   },
   {
     id: 'ex_052',
@@ -580,7 +580,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Close grip on bar. Pull bar straight up to chin, leading with elbows, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=VBBRYBOByfc',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+upright+row+proper+form',
   },
   {
     id: 'ex_053',
@@ -591,7 +591,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hold bar at thigh level. Shrug shoulders straight up toward ears, hold briefly, lower.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=g6qbq4Lf1FI',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+shrug+proper+form',
   },
   {
     id: 'ex_054',
@@ -602,7 +602,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Low cable, hinge at hips keeping back flat. Feel hamstring stretch, drive hips forward to stand.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=hCDzSR6bW10',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+romanian+deadlift+proper+form',
   },
   {
     id: 'ex_055',
@@ -613,7 +613,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Cable behind you at ankle. Extend leg back contracting tricep, hold squeeze, return.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=6SS6K3lAwZ8',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=cable+kickback+tricep+proper+form',
   },
 
   // ─────────────────────────────
@@ -628,7 +628,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Feet shoulder-width on platform. Lower weight until knees at 90 degrees, press back up without locking out.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=IZxyjW7MPJQ',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=leg+press+proper+form',
   },
   {
     id: 'ex_057',
@@ -639,7 +639,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Seated, shin pad above feet. Extend legs to full lockout, squeeze quads, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=YyvSfVjQeL0',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=leg+extension+machine+proper+form',
   },
   {
     id: 'ex_058',
@@ -650,7 +650,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Seated, pad on lower shins. Curl legs down toward seat, squeeze hamstrings at bottom, extend slowly.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=1Tq3QdYUuHs',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=seated+leg+curl+machine+proper+form',
   },
   {
     id: 'ex_059',
@@ -661,7 +661,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Face down, pad above heels. Curl heels toward glutes, squeeze hamstrings, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=Orxowest56U',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=lying+leg+curl+machine+proper+form',
   },
   {
     id: 'ex_060',
@@ -672,7 +672,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Sit with back supported. Press handles forward to full arm extension, return with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=xUm0BiZCX_I',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=chest+press+machine+proper+form',
   },
   {
     id: 'ex_061',
@@ -683,7 +683,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Elbows on pads at shoulder height. Bring arms together in front, squeeze chest, open slowly.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=Z57CtFmRMxA',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=pec+deck+machine+fly+proper+form',
   },
   {
     id: 'ex_062',
@@ -694,7 +694,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Wide grip on bar. Pull to chest leading with elbows, squeeze lats, control the return.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=CAwf7n6Luuc',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=lat+pulldown+machine+proper+form',
   },
   {
     id: 'ex_063',
@@ -705,7 +705,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Chest against pad. Row handles to sides of torso, squeeze shoulder blades, return controlled.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=GZbfZ033f74',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=seated+row+machine+proper+form',
   },
   {
     id: 'ex_064',
@@ -716,7 +716,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Adjust seat height so handles are at shoulder level. Press up to lockout, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=Wqq43dKW1TU',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=shoulder+press+machine+proper+form',
   },
   {
     id: 'ex_065',
@@ -727,7 +727,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Bar on upper back in Smith machine. Squat to parallel maintaining upright torso, drive through heels.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=m4ytQ5eybhI',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=smith+machine+squat+proper+form',
   },
   {
     id: 'ex_066',
@@ -738,7 +738,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Lie on bench under Smith bar. Lower to chest with controlled descent, press back up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=rT7DgCr-3pg',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=smith+machine+bench+press+proper+form',
   },
   {
     id: 'ex_067',
@@ -749,7 +749,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Seated with pads on outside of thighs. Push legs outward against resistance, return with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=DENHLNlhPdk',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=hip+abductor+machine+proper+form',
   },
   {
     id: 'ex_068',
@@ -760,7 +760,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Seated with pads on inside of thighs. Squeeze legs together against resistance, return with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=ppFPVVQvbyI',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=hip+adductor+machine+proper+form',
   },
   {
     id: 'ex_069',
@@ -771,7 +771,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Shoulder pads on traps, balls of feet on platform. Rise onto toes fully, pause, lower heels below platform.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=gwLzBJYoWlI',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=calf+raise+machine+proper+form',
   },
   {
     id: 'ex_070',
@@ -782,7 +782,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hips on pad, legs secured. Bend forward then extend back to neutral or slightly hyperextended.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=ph3pddpKzzw',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=back+extension+machine+proper+form',
   },
 
   // ─────────────────────────────
@@ -797,7 +797,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Overhand grip, hands wider than shoulders. Pull chest to bar, keeping core tight, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=eGo4IYlbE5g',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=pull+up+proper+form',
   },
   {
     id: 'ex_072',
@@ -808,7 +808,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Underhand grip, shoulder width. Pull chin above bar, squeezing biceps and back, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=brhRXlOhsAM',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=chin+up+proper+form',
   },
   {
     id: 'ex_073',
@@ -819,7 +819,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Plank position, hands below shoulders. Lower chest to floor keeping body rigid, press back up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=IODxDxX7oi4',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=push+up+proper+form',
   },
   {
     id: 'ex_074',
@@ -830,7 +830,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Grip parallel bars, slight forward lean. Lower until upper arms are parallel to floor, press up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=2z8JmcrW-As',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=dip+exercise+proper+form',
   },
   {
     id: 'ex_075',
@@ -841,7 +841,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Feet shoulder-width apart. Squat down until thighs parallel to floor, keeping chest tall, stand up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=aclHkVaku9U',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=bodyweight+squat+proper+form',
   },
   {
     id: 'ex_076',
@@ -852,7 +852,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Rear foot elevated on bench. Lower front knee toward floor until parallel, drive through front heel.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=2C-uNgKwPLE',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=bulgarian+split+squat+proper+form',
   },
   {
     id: 'ex_077',
@@ -863,7 +863,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Lie on back, knees bent, feet flat. Drive hips up squeezing glutes hard at top, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=OUgsJ8-Vi0E',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=glute+bridge+proper+form',
   },
   {
     id: 'ex_078',
@@ -874,7 +874,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Forearms on floor, body straight line. Hold position squeezing core and glutes, breathe steadily.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=pSHjTRCQxIw',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=plank+exercise+proper+form',
   },
   {
     id: 'ex_079',
@@ -885,7 +885,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Side-lying on forearm. Lift hips forming a straight line, hold with core tight, repeat both sides.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=_rdfjFSFKsY',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=side+plank+proper+form',
   },
   {
     id: 'ex_080',
@@ -896,7 +896,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Plank position. Drive alternating knees toward chest rapidly, keeping hips level and core tight.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=nmwgirgXLYM',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=mountain+climber+exercise+proper+form',
   },
   {
     id: 'ex_081',
@@ -907,7 +907,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'From standing, drop hands to floor, jump feet back to plank, perform push-up, jump feet forward, leap up.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=818W1HxMTt0',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=burpee+proper+form',
   },
   {
     id: 'ex_082',
@@ -918,7 +918,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hang from bar. Raise knees to chest, squeezing abs, lower with control. Avoid swinging.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=Pr1ieGZ5ATk',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=hanging+knee+raise+proper+form',
   },
   {
     id: 'ex_083',
@@ -929,7 +929,7 @@ export const exercises = [
     type: 'Isolation',
     techniqueDescription:
       'Hang from bar with straight legs. Raise legs to parallel or higher, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=hdng3Nm1x_E',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=hanging+leg+raise+proper+form',
   },
   {
     id: 'ex_084',
@@ -940,7 +940,7 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Hang under bar at waist height. Pull chest to bar, squeezing shoulder blades, lower with control.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=LR1fzzaSnDo',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=inverted+row+proper+form',
   },
   {
     id: 'ex_085',
@@ -951,6 +951,6 @@ export const exercises = [
     type: 'Compound',
     techniqueDescription:
       'Stand before box. Dip slightly then explosively jump onto box, land softly with bent knees, step down.',
-    youtubeUrl: 'https://www.youtube.com/watch?v=hxldAGPSKqo',
+    youtubeUrl: 'https://www.youtube.com/results?search_query=box+jump+proper+form',
   },
 ]
