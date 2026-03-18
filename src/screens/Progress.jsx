@@ -155,6 +155,25 @@ function Progress() {
     return { maxWeight: entries, volume: entries, pr }
   }, [selectedExercise, sessions])
 
+  // All-time PR (best weight) per exercise
+  const allPRs = useMemo(() => {
+    const prMap = {}
+    sessions.forEach((s) => {
+      s.exercises?.forEach((ex) => {
+        if (!ex.name) return
+        ex.sets?.forEach((set) => {
+          const w = parseFloat(set.weight) || 0
+          if (w > 0 && (!prMap[ex.name] || w > prMap[ex.name].weight)) {
+            prMap[ex.name] = { weight: w, date: s.date }
+          }
+        })
+      })
+    })
+    return Object.entries(prMap)
+      .sort(([, a], [, b]) => b.weight - a.weight)
+      .map(([name, v]) => ({ name, weight: v.weight, date: v.date }))
+  }, [sessions])
+
   // Weekly consistency data (last 12 weeks)
   const weeklyData = useMemo(() => {
     const weeks = []
@@ -342,6 +361,33 @@ function Progress() {
       {/* Tab 2: By Exercise */}
       {activeTab === 1 && (
         <div className="space-y-6">
+          {/* PR Board */}
+          {allPRs.length > 0 && (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-3">🏆 Personal Records</h2>
+              <div className="space-y-2.5">
+                {allPRs.map((pr, i) => (
+                  <button
+                    key={pr.name}
+                    onClick={() => setSelectedExercise(pr.name)}
+                    className="w-full flex items-center justify-between gap-2 text-left active:opacity-70 transition-opacity"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs text-slate-400 w-5 shrink-0 text-right">{i + 1}</span>
+                      <p className="text-sm text-slate-900 dark:text-white truncate">{pr.name}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-orange-500">{pr.weight} {unit}</p>
+                      <p className="text-xs text-slate-400">
+                        {new Date(pr.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Exercise Selector */}
           <select
             value={selectedExercise}

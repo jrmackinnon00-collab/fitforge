@@ -314,19 +314,21 @@ function ExerciseRow({
         {/* Sets / Reps / Rest */}
         <div className="grid grid-cols-3 gap-2 pl-6">
           {[
-            { label: 'Sets', field: 'sets', type: 'number' },
-            { label: 'Reps', field: 'reps', type: 'text' },
-            { label: 'Rest', field: 'rest', type: 'text' },
-          ].map(({ label, field, type }) => (
+            { label: 'Sets', field: 'sets', mode: 'numeric' },
+            { label: 'Reps', field: 'reps', mode: 'text' },
+            { label: 'Rest', field: 'rest', mode: 'text' },
+          ].map(({ label, field, mode }) => (
             <div key={field}>
               <label className="text-slate-400 text-xs mb-1 block">{label}</label>
               <input
-                type={type}
+                type="text"
+                inputMode={mode}
                 value={exercise[field]}
+                onFocus={(e) => e.target.select()}
                 onChange={(e) =>
                   onUpdate(
                     dayIndex, exIndex, field,
-                    type === 'number' ? parseInt(e.target.value) || 1 : e.target.value
+                    mode === 'numeric' ? parseInt(e.target.value) || 1 : e.target.value
                   )
                 }
                 className="w-full bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-600 focus:border-orange-500 focus:outline-none"

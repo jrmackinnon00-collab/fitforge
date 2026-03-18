@@ -173,12 +173,14 @@ function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard
-          title="Total Workouts"
-          value={stats.totalWorkouts}
-          icon={<Dumbbell size={20} />}
-          color="orange"
-        />
+        <div onClick={() => navigate('/dashboard/progress')} className="cursor-pointer active:scale-95 transition-transform">
+          <StatCard
+            title="Total Workouts ›"
+            value={stats.totalWorkouts}
+            icon={<Dumbbell size={20} />}
+            color="orange"
+          />
+        </div>
         <StatCard
           title="This Month"
           value={stats.workoutsThisMonth}
