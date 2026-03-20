@@ -124,7 +124,7 @@ function MyPlans() {
           </p>
           <button
             onClick={() => navigate('/dashboard/plans/new')}
-            className="btn-cta text-white px-6 py-3 rounded-2xl font-semibold active:scale-95 transition-all"
+            className="bg-orange-500 text-white px-6 py-3 rounded-2xl font-semibold active:scale-95 transition-all"
           >
             Create Your First Plan
           </button>

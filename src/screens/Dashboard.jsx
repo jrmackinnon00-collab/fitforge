@@ -244,7 +244,7 @@ function Dashboard() {
       {/* Quick Start Button */}
       <button
         onClick={() => navigate('/dashboard/log')}
-        className="w-full btn-cta active:scale-95 text-white font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 min-h-[56px]"
+        className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 min-h-[56px] shadow-lg shadow-orange-500/20"
       >
         <Play size={20} fill="white" />
         Start Today's Workout
