@@ -363,7 +363,7 @@ function ProfileSetup({ onComplete }) {
         {step < totalSteps ? (
           <button
             onClick={handleNext}
-            className="flex-1 py-4 rounded-2xl bg-orange-500 text-white font-semibold text-base min-h-[56px] active:scale-95 transition-all"
+            className="flex-1 py-4 rounded-2xl btn-cta text-white font-semibold text-base min-h-[56px] active:scale-95 transition-all"
           >
             Next
           </button>
@@ -371,7 +371,7 @@ function ProfileSetup({ onComplete }) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 py-4 rounded-2xl bg-orange-500 text-white font-semibold text-base min-h-[56px] active:scale-95 transition-all disabled:opacity-70"
+            className="flex-1 py-4 rounded-2xl btn-cta text-white font-semibold text-base min-h-[56px] active:scale-95 transition-all disabled:opacity-70"
           >
             {saving ? 'Saving...' : 'Get Started!'}
           </button>

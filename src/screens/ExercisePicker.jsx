@@ -217,7 +217,7 @@ function ExercisePicker({ onSelectMultiple, onClose }) {
         <div className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 px-4 py-4 z-10">
           <button
             onClick={handleAddSelected}
-            className="w-full bg-orange-500 text-white py-4 rounded-2xl font-bold text-base active:scale-95 transition-all shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2"
+            className="w-full btn-cta text-white py-4 rounded-2xl font-bold text-base active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <Plus size={20} />
             Add {selectedIds.size} Exercise{selectedIds.size !== 1 ? 's' : ''} to Day

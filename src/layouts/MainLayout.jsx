@@ -10,7 +10,7 @@ function MainLayout() {
         <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏋️</span>
-            <span className="text-xl font-bold text-orange-500">FitForge</span>
+            <span className="brand-name text-xl font-bold text-orange-500">FitForge</span>
           </div>
           <ThemeToggle />
         </div>
