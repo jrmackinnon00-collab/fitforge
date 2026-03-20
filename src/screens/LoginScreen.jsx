@@ -213,7 +213,7 @@ function LoginScreen({ accessDenied = false }) {
 
         {/* Logo — always visible */}
         <div className="text-center mb-8">
-          <div className="text-7xl mb-3">🏋️</div>
+          <img src="/mascot.png" alt="FitForge mascot" className="w-28 h-28 object-contain mx-auto mb-3" />
           <h1 className="text-5xl font-black text-white mb-2 tracking-tight">
             Fit<span className="text-orange-500">Forge</span>
           </h1>
