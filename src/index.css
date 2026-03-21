@@ -1,103 +1,10 @@
 @import "tailwindcss";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   PHASE 1: KINETIC BRUTALISM — Design Token Overrides
-   Strategy: remap Tailwind's slate + orange tokens at the CSS level so every
-   existing class in the app (bg-slate-900, border-slate-700, etc.) automatically
-   uses the new gunmetal palette — zero JSX changes required for colour.
-   Border-radius tokens are similarly flattened to 4 px to sharpen the UI.
-───────────────────────────────────────────────────────────────────────────── */
-
-@theme {
-  /* ── Gunmetal palette (replaces slate) ──────────────────────────────────── */
-  --color-slate-950: #0E0E11;   /* Base layer — deepest background            */
-  --color-slate-900: #131316;   /* Deep Gunmetal — primary screen background  */
-  --color-slate-800: #1F1F22;   /* Component layer — cards, modals, header    */
-  --color-slate-700: #2A2A2D;   /* Mid-level — secondary containers, borders  */
-  --color-slate-600: #35353A;   /* Active/floating — hover states             */
-  --color-slate-500: #6B6B6E;   /* Muted text                                 */
-  --color-slate-400: #9B9B9E;   /* Secondary text / labels                    */
-  --color-slate-300: #C4C4C7;   /* Medium text                                */
-  --color-slate-200: #E3E3E3;   /* Polished Chrome — high-contrast highlights */
-  --color-slate-100: #EDEDEE;   /* Near-chrome                                */
-  --color-slate-50:  #F5F5F6;   /* Off-white for light-mode surfaces          */
-
-  /* ── Warning Orange (replaces the softer orange-500) ───────────────────── */
-  --color-orange-600: #E64A19;
-  --color-orange-500: #FF5722;  /* Warning Orange — primary CTA / active      */
-  --color-orange-400: #FF7043;
-
-  /* ── Sharp corners — flatten all radii to 4 px (rounded-full untouched) ── */
-  --radius-sm:  2px;
-  --radius:     4px;
-  --radius-md:  4px;
-  --radius-lg:  4px;
-  --radius-xl:  4px;
-  --radius-2xl: 4px;
-  --radius-3xl: 4px;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   BRAND TOKENS
-───────────────────────────────────────────────────────────────────────────── */
 :root {
-  --color-primary:   #FF5722;
+  --color-primary: #F97316;
   --color-secondary: #3B82F6;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   TYPOGRAPHY — Space Grotesk for headings
-───────────────────────────────────────────────────────────────────────────── */
-h1 {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  letter-spacing: 0.06em;
-}
-
-h2 {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  letter-spacing: 0.03em;
-}
-
-/* Brand logo in the nav header */
-.brand-name {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  letter-spacing: 0.08em;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   PRIMARY CTA BUTTON — gradient "Ignition Switch"
-   Apply class `btn-cta` alongside existing Tailwind layout classes.
-   The !important overrides the bg-orange-500 fallback if still present.
-───────────────────────────────────────────────────────────────────────────── */
-.btn-cta {
-  background: linear-gradient(135deg, #FF7043 0%, #FF5722 100%) !important;
-  box-shadow: 0 4px 20px rgba(255, 87, 34, 0.35);
-  transition: box-shadow 150ms linear, transform 150ms linear;
-}
-.btn-cta:hover {
-  box-shadow: 0 4px 28px rgba(255, 87, 34, 0.55);
-}
-.btn-cta:active {
-  box-shadow: 0 2px 12px rgba(255, 87, 34, 0.4);
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   FILM GRAIN TEXTURE — 2% noise overlay on all surfaces
-───────────────────────────────────────────────────────────────────────────── */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   GLOBAL RESETS
-───────────────────────────────────────────────────────────────────────────── */
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -110,6 +17,7 @@ body {
   color-scheme: dark;
 }
 
+/* Smooth scrolling for mobile */
 html {
   scroll-behavior: smooth;
 }
@@ -124,15 +32,13 @@ select {
   appearance: none;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   RANGE SLIDER
-───────────────────────────────────────────────────────────────────────────── */
+/* Custom range slider styling */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   height: 6px;
-  border-radius: 0;
-  background: #2A2A2D;
+  border-radius: 3px;
+  background: #374151;
   outline: none;
 }
 
@@ -141,45 +47,44 @@ input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   width: 20px;
   height: 20px;
-  border-radius: 2px;
-  background: #FF5722;
+  border-radius: 50%;
+  background: #F97316;
   cursor: pointer;
 }
 
 input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
-  border-radius: 2px;
-  background: #FF5722;
+  border-radius: 50%;
+  background: #F97316;
   cursor: pointer;
   border: none;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   UTILITIES
-───────────────────────────────────────────────────────────────────────────── */
+/* Safe area padding for iOS notch/home indicator */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Animation for loading */
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   CALENDAR HEATMAP
-───────────────────────────────────────────────────────────────────────────── */
+/* Calendar heatmap styles */
 .react-calendar-heatmap text {
   font-size: 10px;
-  fill: #6B6B6E;
+  fill: #9CA3AF;
 }
 
 .react-calendar-heatmap .color-empty {
-  fill: #1F1F22;
+  fill: #1E293B;
 }
 
 .react-calendar-heatmap .color-scale-1 {
@@ -188,15 +93,15 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .react-calendar-heatmap .color-scale-2 {
-  fill: #FF5722;
+  fill: #F97316;
   opacity: 0.5;
 }
 
 .react-calendar-heatmap .color-scale-3 {
-  fill: #FF5722;
+  fill: #F97316;
   opacity: 0.7;
 }
 
 .react-calendar-heatmap .color-scale-4 {
-  fill: #FF5722;
+  fill: #F97316;
 }

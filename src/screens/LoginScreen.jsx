@@ -328,7 +328,7 @@ function LoginScreen({ accessDenied = false }) {
                 <button
                   type="submit"
                   disabled={emailLoading}
-                  className="w-full btn-cta text-white font-semibold py-4 rounded-2xl transition-all active:scale-95 disabled:opacity-70 min-h-[56px]"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-2xl transition-all active:scale-95 disabled:opacity-70 min-h-[56px]"
                 >
                   {emailLoading ? (
                     <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin mx-auto" />
@@ -417,7 +417,7 @@ function LoginScreen({ accessDenied = false }) {
                 <button
                   type="submit"
                   disabled={resetLoading}
-                  className="w-full btn-cta text-white font-semibold py-4 rounded-2xl transition-all active:scale-95 disabled:opacity-70 min-h-[56px]"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-2xl transition-all active:scale-95 disabled:opacity-70 min-h-[56px]"
                 >
                   {resetLoading ? (
                     <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin mx-auto" />
@@ -522,7 +522,7 @@ function LoginScreen({ accessDenied = false }) {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full btn-cta text-white font-semibold py-4 rounded-2xl transition-all active:scale-95 disabled:opacity-70 min-h-[56px]"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-2xl transition-all active:scale-95 disabled:opacity-70 min-h-[56px]"
               >
                 {submitting ? (
                   <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin mx-auto" />

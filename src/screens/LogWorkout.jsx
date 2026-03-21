@@ -698,7 +698,7 @@ function LogWorkout() {
       <button
         onClick={handleFinishWorkout}
         disabled={saving}
-        className="w-full btn-cta text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 min-h-[56px] active:scale-95 transition-all disabled:opacity-70"
+        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 min-h-[56px] active:scale-95 transition-all disabled:opacity-70 shadow-lg shadow-orange-500/20"
       >
         {saving ? (
           <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
