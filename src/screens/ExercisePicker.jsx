@@ -1,19 +1,172 @@
 import { useState, useMemo } from 'react'
 import { exercises } from '../data/exercises'
-import { Search, X, Check, Plus } from 'lucide-react'
+import { Search, X, Check, Plus, ChevronRight } from 'lucide-react'
 
-const MUSCLE_GROUPS = ['All', 'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Core']
+const MUSCLE_GROUPS = ['All', 'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core']
 const EQUIPMENT_FILTERS = ['All', 'Barbell', 'Dumbbell', 'Cable', 'Machine', 'Bodyweight']
+const CUSTOM_MUSCLES = ['Chest', 'Back', 'Lats', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Abs', 'Traps', 'Lower Back']
+
+function CustomExerciseForm({ onConfirm, onCancel }) {
+  const [name, setName] = useState('')
+  const [muscles, setMuscles] = useState([])
+  const [type, setType] = useState('Compound')
+
+  // Real-time library suggestions as user types
+  const suggestions = useMemo(() => {
+    if (name.length < 2) return []
+    const needle = name.toLowerCase()
+    return exercises
+      .filter((ex) => ex.name.toLowerCase().includes(needle))
+      .slice(0, 3)
+  }, [name])
+
+  const applySuggestion = (ex) => {
+    setName(ex.name)
+    setMuscles(ex.primaryMuscles)
+    setType(ex.type)
+  }
+
+  const toggleMuscle = (muscle) => {
+    setMuscles((prev) =>
+      prev.includes(muscle) ? prev.filter((m) => m !== muscle) : [...prev, muscle]
+    )
+  }
+
+  const canConfirm = name.trim().length > 0 && muscles.length > 0
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end bg-black/60" onClick={onCancel}>
+      <div
+        className="w-full max-w-md mx-auto bg-slate-800 rounded-t-3xl px-5 pt-4 pb-8 shadow-2xl border-t border-slate-700"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-white font-bold text-base">Add Custom Exercise</h3>
+          <button
+            onClick={onCancel}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-700 text-slate-400"
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Name input */}
+        <div className="mb-3">
+          <label className="text-slate-400 text-xs font-semibold mb-1.5 block">EXERCISE NAME</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Straight Arm Pull Down"
+            autoFocus
+            className="w-full bg-slate-700 text-white rounded-xl px-4 py-3 border border-slate-600 focus:border-orange-500 focus:outline-none text-sm"
+          />
+        </div>
+
+        {/* Library suggestions */}
+        {suggestions.length > 0 && (
+          <div className="mb-3 rounded-xl overflow-hidden border border-slate-600">
+            <p className="text-slate-500 text-xs px-3 py-1.5 bg-slate-700/50">
+              Library matches — tap to use
+            </p>
+            {suggestions.map((ex) => (
+              <button
+                key={ex.id}
+                onClick={() => applySuggestion(ex)}
+                className="w-full text-left px-3 py-2.5 flex items-center justify-between bg-slate-700/30 hover:bg-slate-700 border-t border-slate-600/50 transition-colors"
+              >
+                <div>
+                  <p className="text-white text-sm font-medium">{ex.name}</p>
+                  <p className="text-slate-400 text-xs">{ex.primaryMuscles.join(', ')}</p>
+                </div>
+                <ChevronRight size={14} className="text-slate-500 shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Muscle groups */}
+        <div className="mb-3">
+          <label className="text-slate-400 text-xs font-semibold mb-1.5 block">
+            PRIMARY MUSCLES <span className="text-orange-400">(select all that apply)</span>
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {CUSTOM_MUSCLES.map((m) => (
+              <button
+                key={m}
+                onClick={() => toggleMuscle(m)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  muscles.includes(m)
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-slate-700 text-slate-400'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Compound / Isolation toggle */}
+        <div className="mb-5">
+          <label className="text-slate-400 text-xs font-semibold mb-1.5 block">TYPE</label>
+          <div className="flex gap-2">
+            {['Compound', 'Isolation'].map((t) => (
+              <button
+                key={t}
+                onClick={() => setType(t)}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  type === t
+                    ? t === 'Compound'
+                      ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40'
+                      : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
+                    : 'bg-slate-700 text-slate-500 border border-transparent'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={() =>
+            canConfirm &&
+            onConfirm({
+              id: `custom_${Date.now()}`,
+              name: name.trim(),
+              primaryMuscles: muscles,
+              secondaryMuscles: [],
+              equipment: ['Any'],
+              type,
+              isCustom: true,
+            })
+          }
+          disabled={!canConfirm}
+          className="w-full bg-orange-500 disabled:bg-slate-600 disabled:text-slate-400 text-white py-3.5 rounded-2xl font-bold text-sm active:scale-95 transition-all"
+        >
+          {canConfirm ? `Add "${name.trim()}"` : 'Enter name & select muscles'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function ExercisePicker({ onSelectMultiple, onClose }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMuscle, setSelectedMuscle] = useState('All')
   const [selectedEquipment, setSelectedEquipment] = useState('All')
-  // Set of selected exercise IDs for multi-select
   const [selectedIds, setSelectedIds] = useState(new Set())
+  const [customExercises, setCustomExercises] = useState([])
+  const [showCustomForm, setShowCustomForm] = useState(false)
+
+  const allExercises = useMemo(() => [...exercises, ...customExercises], [customExercises])
 
   const filteredExercises = useMemo(() => {
-    return exercises.filter((ex) => {
+    return allExercises.filter((ex) => {
       const matchesSearch =
         searchQuery === '' ||
         ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -34,7 +187,7 @@ function ExercisePicker({ onSelectMultiple, onClose }) {
 
       return matchesSearch && matchesMuscle && matchesEquipment
     })
-  }, [searchQuery, selectedMuscle, selectedEquipment])
+  }, [searchQuery, selectedMuscle, selectedEquipment, allExercises])
 
   const toggleSelect = (exercise) => {
     setSelectedIds((prev) => {
@@ -49,12 +202,20 @@ function ExercisePicker({ onSelectMultiple, onClose }) {
   }
 
   const handleAddSelected = () => {
-    const chosen = exercises.filter((ex) => selectedIds.has(ex.id))
+    const chosen = allExercises.filter((ex) => selectedIds.has(ex.id))
     onSelectMultiple(chosen)
   }
 
-  const getTypeBadgeColor = (type) =>
-    type === 'Compound' ? 'bg-orange-500/10 text-orange-500' : 'bg-blue-500/10 text-blue-500'
+  const handleCustomConfirm = (ex) => {
+    setCustomExercises((prev) => [...prev, ex])
+    setSelectedIds((prev) => new Set([...prev, ex.id]))
+    setShowCustomForm(false)
+  }
+
+  const getTypeBadgeColor = (type, isCustom) => {
+    if (isCustom) return 'bg-purple-500/10 text-purple-400'
+    return type === 'Compound' ? 'bg-orange-500/10 text-orange-500' : 'bg-blue-500/10 text-blue-500'
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-900">
@@ -133,7 +294,7 @@ function ExercisePicker({ onSelectMultiple, onClose }) {
         </div>
       </div>
 
-      {/* Result count */}
+      {/* Result count + custom exercise button */}
       <div className="px-4 py-2 bg-slate-900 flex items-center justify-between">
         <p className="text-slate-500 text-xs">
           {filteredExercises.length} exercises
@@ -141,14 +302,23 @@ function ExercisePicker({ onSelectMultiple, onClose }) {
             <span className="text-orange-400 ml-2">• {selectedIds.size} selected</span>
           )}
         </p>
-        {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3">
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-slate-400 text-xs underline"
+            >
+              Clear all
+            </button>
+          )}
           <button
-            onClick={() => setSelectedIds(new Set())}
-            className="text-slate-400 text-xs underline"
+            onClick={() => setShowCustomForm(true)}
+            className="flex items-center gap-1 text-orange-400 text-xs font-semibold"
           >
-            Clear all
+            <Plus size={13} />
+            Custom
           </button>
-        )}
+        </div>
       </div>
 
       {/* Exercise List */}
@@ -158,6 +328,12 @@ function ExercisePicker({ onSelectMultiple, onClose }) {
             <div className="text-4xl mb-3">🔍</div>
             <p className="text-slate-400 font-medium">No exercises found</p>
             <p className="text-slate-500 text-sm mt-1">Try adjusting your filters</p>
+            <button
+              onClick={() => setShowCustomForm(true)}
+              className="mt-4 bg-orange-500/10 text-orange-400 px-4 py-2 rounded-xl text-sm font-semibold"
+            >
+              + Add Custom Exercise
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-slate-800">
@@ -200,10 +376,11 @@ function ExercisePicker({ onSelectMultiple, onClose }) {
                   {/* Type badge */}
                   <span
                     className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${getTypeBadgeColor(
-                      exercise.type
+                      exercise.type,
+                      exercise.isCustom
                     )}`}
                   >
-                    {exercise.type}
+                    {exercise.isCustom ? 'Custom' : exercise.type}
                   </span>
                 </button>
               )
@@ -223,6 +400,14 @@ function ExercisePicker({ onSelectMultiple, onClose }) {
             Add {selectedIds.size} Exercise{selectedIds.size !== 1 ? 's' : ''} to Day
           </button>
         </div>
+      )}
+
+      {/* Custom Exercise Form */}
+      {showCustomForm && (
+        <CustomExerciseForm
+          onConfirm={handleCustomConfirm}
+          onCancel={() => setShowCustomForm(false)}
+        />
       )}
     </div>
   )

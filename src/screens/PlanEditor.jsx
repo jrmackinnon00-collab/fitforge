@@ -10,7 +10,7 @@ import ExercisePicker from './ExercisePicker'
 import LoadingSpinner from '../components/LoadingSpinner'
 import {
   ChevronLeft, Sparkles, Plus, ChevronDown, ChevronUp,
-  Trash2, X, GripVertical, Info, Youtube, Settings2
+  Trash2, X, GripVertical, Info, Youtube, Settings2, Shuffle
 } from 'lucide-react'
 
 // ─── AI Options Sheet ─────────────────────────────────────────────────────────
@@ -247,12 +247,19 @@ function TechniquePopover({ exercise, onClose }) {
 // ─── Exercise Row ─────────────────────────────────────────────────────────────
 function ExerciseRow({
   exercise, dayIndex, exIndex,
-  onUpdate, onRemove,
+  onUpdate, onRemove, onReroll,
   onGripPointerDown,
   isDragging,
 }) {
   const [showPopover, setShowPopover] = useState(false)
+  const [rerolling, setRerolling] = useState(false)
   const libEntry = findLibraryEntry(exercise.name)
+
+  const handleReroll = () => {
+    setRerolling(true)
+    setTimeout(() => setRerolling(false), 500)
+    onReroll(dayIndex, exIndex)
+  }
 
   return (
     <>
@@ -302,6 +309,16 @@ function ExerciseRow({
               <Youtube size={15} />
             </a>
           )}
+
+          <button
+            onClick={handleReroll}
+            title="Swap for a similar exercise"
+            className={`w-7 h-7 flex items-center justify-center text-slate-400 hover:text-orange-400 transition-all shrink-0 ${
+              rerolling ? 'rotate-180 text-orange-400' : ''
+            }`}
+          >
+            <Shuffle size={14} />
+          </button>
 
           <button
             onClick={() => onRemove(dayIndex, exIndex)}
@@ -588,6 +605,28 @@ function PlanEditor() {
     )
   }
 
+  const rerollExercise = (dayIndex, exIndex) => {
+    const current = days[dayIndex].exercises[exIndex]
+    const libEntry = findLibraryEntry(current.name)
+    const targetMuscles = libEntry?.primaryMuscles || []
+
+    if (targetMuscles.length === 0) return
+
+    // Find library exercises that share at least one primary muscle, excluding the current one
+    const candidates = exerciseLibrary.filter(
+      (ex) =>
+        ex.name !== (libEntry?.name || current.name) &&
+        ex.primaryMuscles.some((m) =>
+          targetMuscles.some((t) => m.toLowerCase() === t.toLowerCase())
+        )
+    )
+
+    if (candidates.length === 0) return
+
+    const picked = candidates[Math.floor(Math.random() * candidates.length)]
+    updateExercise(dayIndex, exIndex, 'name', picked.name)
+  }
+
   if (loadingPlan) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -744,6 +783,7 @@ function PlanEditor() {
                             exIndex={exIndex}
                             onUpdate={updateExercise}
                             onRemove={removeExercise}
+                            onReroll={rerollExercise}
                             onGripPointerDown={onGripPointerDown}
                             isDragging={draggingKey === `${dayIndex}-${exIndex}`}
                           />
