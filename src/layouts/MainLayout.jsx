@@ -9,8 +9,8 @@ function MainLayout() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/mascot.png" alt="FitForge mascot" className="w-9 h-9 object-contain" />
-            <span className="text-xl font-bold text-orange-500">FitForge</span>
+            <img src="/mascot.png" alt="GetReppd mascot" className="w-9 h-9 object-contain" />
+            <span className="text-xl font-bold text-orange-500">GetReppd</span>
           </div>
           <ThemeToggle />
         </div>

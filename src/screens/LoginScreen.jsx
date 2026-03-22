@@ -213,9 +213,9 @@ function LoginScreen({ accessDenied = false }) {
 
         {/* Logo — always visible */}
         <div className="text-center mb-8">
-          <img src="/mascot.png" alt="FitForge mascot" className="w-28 h-28 object-contain mx-auto mb-3" />
+          <img src="/mascot.png" alt="GetReppd mascot" className="w-28 h-28 object-contain mx-auto mb-3" />
           <h1 className="text-5xl font-black text-white mb-2 tracking-tight">
-            Fit<span className="text-orange-500">Forge</span>
+            Get<span className="text-orange-500">Reppd</span>
           </h1>
           <p className="text-slate-400 text-lg font-medium">Build your best self</p>
         </div>
@@ -442,7 +442,7 @@ function LoginScreen({ accessDenied = false }) {
             <div className="mb-6">
               <h2 className="text-xl font-bold text-white mb-1">Request Access</h2>
               <p className="text-slate-400 text-sm">
-                FitForge is currently invite-only. Leave your details and you'll be notified when access is granted.
+                GetReppd is currently invite-only. Leave your details and you'll be notified when access is granted.
               </p>
             </div>
 

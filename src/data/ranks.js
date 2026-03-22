@@ -11,7 +11,7 @@ export const RANKS = [
     icon: '⚙️',
     theme: 'gray',
     colour: '#94a3b8',
-    perk: 'Welcome to FitForge. Your journey begins.',
+    perk: 'Welcome to GetReppd. Your journey begins.',
   },
   {
     level: 2,

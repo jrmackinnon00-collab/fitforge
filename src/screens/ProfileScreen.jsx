@@ -350,7 +350,7 @@ function ProfileScreen() {
 
       {/* App Version */}
       <p className="text-center text-slate-400 text-xs pb-4">
-        FitForge v{appVersion}
+        GetReppd v{appVersion}
       </p>
     </div>
   )
