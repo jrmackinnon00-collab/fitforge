@@ -270,8 +270,16 @@ function LogWorkout() {
             (e) => e.name?.toLowerCase() === name?.toLowerCase()
           )
           if (ex && ex.sets?.length > 0) {
-            const lastSet = ex.sets[ex.sets.length - 1]
-            perf[name] = `${ex.sets.length}x${lastSet.reps} @ ${lastSet.weight} ${profile.weightUnit || 'lbs'}`
+            // Store the last 3 sets as structured data so the UI can render them individually
+            const last3 = ex.sets.slice(-3)
+            perf[name] = {
+              date: session.date,
+              sets: last3.map((s) => ({
+                reps: s.reps,
+                weight: s.weight,
+                rpe: s.rpe,
+              })),
+            }
             break
           }
         }
@@ -526,9 +534,37 @@ function LogWorkout() {
                     {exercise.rest && ` • ${exercise.rest} rest`}
                   </p>
                   {previousPerformance[exercise.name] && (
-                    <p className="text-orange-400 text-xs mt-0.5">
-                      Last: {previousPerformance[exercise.name]}
-                    </p>
+                    <div className="mt-1.5">
+                      <p className="text-slate-500 text-xs mb-1">
+                        Last {previousPerformance[exercise.name].date}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {previousPerformance[exercise.name].sets.map((s, i) => {
+                          const rpe = Number(s.rpe)
+                          const rpeColor =
+                            rpe >= 9
+                              ? 'text-red-400'
+                              : rpe >= 7
+                              ? 'text-orange-400'
+                              : 'text-green-400'
+                          return (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 bg-slate-700/60 rounded-lg px-2 py-1 text-xs"
+                            >
+                              <span className="text-white font-medium">
+                                {s.reps}r × {s.weight}{profile.weightUnit || 'lbs'}
+                              </span>
+                              {s.rpe != null && s.rpe !== '' && (
+                                <span className={`font-semibold ${rpeColor}`}>
+                                  @{s.rpe}
+                                </span>
+                              )}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
