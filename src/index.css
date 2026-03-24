@@ -77,6 +77,97 @@ input[type="range"]::-moz-range-thumb {
   animation: spin 1s linear infinite;
 }
 
+/* ─── Rank themes ────────────────────────────────────────────────────────────
+ * Each theme overrides Tailwind's --color-orange-* CSS variables so every
+ * component using orange-400/500/600 automatically picks up the rank colour.
+ * Applied via data-rank-theme="<theme>" on <html>.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Silver theme — Craftsman (Rank 4) and Forgemaster (Rank 5) */
+[data-rank-theme="silver"] {
+  --color-orange-50:  #f8fafc;
+  --color-orange-100: #f1f5f9;
+  --color-orange-200: #e2e8f0;
+  --color-orange-300: #cbd5e1;
+  --color-orange-400: #b4c0cf;
+  --color-orange-500: #94a3b8;
+  --color-orange-600: #64748b;
+  --color-orange-700: #475569;
+  --color-orange-800: #334155;
+  --color-orange-900: #1e293b;
+}
+
+/* Gold theme — Tempered (Rank 6) and Hardened (Rank 7) */
+[data-rank-theme="gold"] {
+  --color-orange-50:  #fefce8;
+  --color-orange-100: #fef9c3;
+  --color-orange-200: #fef08a;
+  --color-orange-300: #fde047;
+  --color-orange-400: #facc15;
+  --color-orange-500: #eab308;
+  --color-orange-600: #ca8a04;
+  --color-orange-700: #a16207;
+  --color-orange-800: #854d0e;
+  --color-orange-900: #713f12;
+}
+
+/* Steel theme — Steelborn (Rank 8) */
+[data-rank-theme="steel"] {
+  --color-orange-50:  #eff6ff;
+  --color-orange-100: #dbeafe;
+  --color-orange-200: #bfdbfe;
+  --color-orange-300: #93c5fd;
+  --color-orange-400: #60a5fa;
+  --color-orange-500: #3b82f6;
+  --color-orange-600: #2563eb;
+  --color-orange-700: #1d4ed8;
+  --color-orange-800: #1e40af;
+  --color-orange-900: #1e3a8a;
+}
+
+/* Ember theme — Iron Legend (Rank 9) */
+[data-rank-theme="ember"] {
+  --color-orange-50:  #fff1f2;
+  --color-orange-100: #ffe4e6;
+  --color-orange-200: #fecdd3;
+  --color-orange-300: #fda4af;
+  --color-orange-400: #fb7185;
+  --color-orange-500: #ef4444;
+  --color-orange-600: #dc2626;
+  --color-orange-700: #b91c1c;
+  --color-orange-800: #991b1b;
+  --color-orange-900: #7f1d1d;
+}
+
+/* Obsidian theme — The Forge Master (Rank 10) */
+[data-rank-theme="obsidian"] {
+  --color-orange-50:  #f5f3ff;
+  --color-orange-100: #ede9fe;
+  --color-orange-200: #ddd6fe;
+  --color-orange-300: #c4b5fd;
+  --color-orange-400: #a78bfa;
+  --color-orange-500: #8b5cf6;
+  --color-orange-600: #7c3aed;
+  --color-orange-700: #6d28d9;
+  --color-orange-800: #5b21b6;
+  --color-orange-900: #4c1d95;
+}
+
+/* ─── Rank badge pulse animation (Rank 6+) ──────────────────────────────── */
+@keyframes rank-badge-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--rank-badge-colour, #ffd700);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--rank-badge-colour, #ffd700),
+                0 0 14px var(--rank-badge-colour, #ffd700);
+  }
+}
+
+.rank-badge-animated {
+  animation: rank-badge-pulse 2.5s ease-in-out infinite;
+}
+
 /* Calendar heatmap styles */
 .react-calendar-heatmap text {
   font-size: 10px;

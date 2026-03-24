@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, query, orderBy, limit, getDocs, where, deleteDoc, doc } from 'firebase/firestore'
 import { db } from '../firebase'
@@ -8,7 +8,8 @@ import StatCard from '../components/StatCard'
 import LoadingSpinner from '../components/LoadingSpinner'
 import RankCard from '../components/RankCard'
 import { useGamification } from '../hooks/useGamification'
-import { Dumbbell, Calendar, Flame, Trophy, Play, Trash2, TrendingUp } from 'lucide-react'
+import { getRankForPoints } from '../data/ranks'
+import { Dumbbell, Calendar, Flame, Trophy, Play, Trash2, TrendingUp, Zap } from 'lucide-react'
 import WorkoutDetailSheet from '../components/WorkoutDetailSheet'
 
 // ─── Volume comparison helper ─────────────────────────────────────────────────
@@ -240,6 +241,40 @@ function Dashboard() {
           onViewAll={() => navigate('/dashboard/achievements')}
         />
       )}
+
+      {/* Weekly FP Summary — unlocked at Forgemaster (Rank 5) */}
+      {(() => {
+        const rankLevel = getRankForPoints(gamification?.totalPoints || 0).level
+        if (rankLevel < 5 || !gamification?.pointsHistory?.length) return null
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+        const cutoff = sevenDaysAgo.toISOString()
+        const weeklyFP = gamification.pointsHistory
+          .filter((e) => e.timestamp >= cutoff)
+          .reduce((sum, e) => sum + (e.points || 0), 0)
+        const weeklyEvents = gamification.pointsHistory.filter((e) => e.timestamp >= cutoff).length
+        return (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-1">
+                  This Week's Forge Points
+                </p>
+                <p className="text-3xl font-black text-slate-900 dark:text-white leading-tight">
+                  +{weeklyFP.toLocaleString()}
+                  <span className="text-base font-semibold ml-1 text-orange-500">FP</span>
+                </p>
+                <p className="text-slate-400 text-xs mt-1">
+                  {weeklyEvents} reward{weeklyEvents !== 1 ? 's' : ''} earned in the last 7 days
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center shrink-0">
+                <Zap size={22} className="text-orange-500" />
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Quick Start Button */}
       <button

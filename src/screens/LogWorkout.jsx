@@ -4,6 +4,7 @@ import { collection, getDocs, addDoc, query, orderBy, limit } from 'firebase/fir
 import { db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
 import useProfileStore from '../store/useProfileStore'
+import useThemeStore from '../store/useThemeStore'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { FPToast } from '../components/FPToast'
 import { BadgeUnlockModal } from '../components/BadgeUnlockModal'
@@ -181,6 +182,7 @@ function formatDisplayDate(iso) {
 function LogWorkout() {
   const { user } = useAuthStore()
   const { profile } = useProfileStore()
+  const { syncRankTheme } = useThemeStore()
   const navigate = useNavigate()
   const startTimeRef = useRef(Date.now())
   const dateInputRef = useRef(null)
@@ -365,6 +367,7 @@ function LogWorkout() {
 
           // Rank-up modal — after badges, or immediately if no badges
           if (rankUp) {
+            syncRankTheme(rankUp.level) // apply the new rank's app theme immediately
             setRankUpData(rankUp)
             hasRankModal = true
             if (!newBadges?.length) setShowRankModal(true)

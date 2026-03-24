@@ -483,7 +483,7 @@ export function useGamification(uid) {
     checkBadge('progresser',   gam.stats.totalProgressiveExercises >= 5)
 
     // Volume
-    checkBadge('volume_king',  gam.stats.totalVolumeLbs >= 1000000)
+    checkBadge('volume_king',  gam.stats.totalVolumeLbs >= 1000000 && gam.currentRank >= 7)
 
     // Plan completion
     checkBadge('plan_graduate',      gam.stats.plansCompleted >= 1)

@@ -97,15 +97,27 @@ function ProfileScreen() {
     <div className="px-4 py-6 space-y-6">
       {/* User Card */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
+        {(() => {
+          const rank = getRankForPoints(gamification?.totalPoints || 0)
+          const isAnimatedBadge = rank.level >= 6
+          const avatarStyle = isAnimatedBadge
+            ? { '--rank-badge-colour': rank.colour }
+            : undefined
+          const avatarClass = `w-16 h-16 rounded-full border-2 border-orange-500${isAnimatedBadge ? ' rank-badge-animated' : ''}`
+          return (
         <div className="flex items-center gap-4">
           {user?.photoURL ? (
             <img
               src={user.photoURL}
               alt={user.displayName}
-              className="w-16 h-16 rounded-full object-cover border-2 border-orange-500"
+              className={`${avatarClass} object-cover`}
+              style={avatarStyle}
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center border-2 border-orange-500">
+            <div
+              className={`${avatarClass} bg-orange-500/10 flex items-center justify-center`}
+              style={avatarStyle}
+            >
               <User size={28} className="text-orange-500" />
             </div>
           )}
@@ -129,6 +141,8 @@ function ProfileScreen() {
             })()}
           </div>
         </div>
+          )
+        })()}
 
         {/* Achievements quick link */}
         <button

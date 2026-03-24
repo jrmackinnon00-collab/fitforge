@@ -4,7 +4,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from './firebase'
 import useAuthStore from './store/useAuthStore'
-import useThemeStore from './store/useThemeStore'
+import useThemeStore, { themeForRankLevel } from './store/useThemeStore'
 import useProfileStore from './store/useProfileStore'
 import LoadingSpinner from './components/LoadingSpinner'
 import LoginScreen from './screens/LoginScreen'
@@ -36,7 +36,7 @@ async function isUserAllowed(uid) {
 
 function App() {
   const { user, loading, setUser, setLoading } = useAuthStore()
-  const { isDark } = useThemeStore()
+  const { isDark, rankTheme, syncRankTheme } = useThemeStore()
   const { setProfile, resetProfile } = useProfileStore()
 
   // null = still checking, true = has profile, false = needs setup
@@ -110,6 +110,29 @@ function App() {
       document.documentElement.classList.remove('dark')
     }
   }, [isDark])
+
+  // Apply rank theme — overrides the orange accent colour throughout the app
+  useEffect(() => {
+    document.documentElement.setAttribute('data-rank-theme', rankTheme || 'default')
+  }, [rankTheme])
+
+  // Sync rank theme from Firestore when user first loads the app, so the
+  // correct theme is shown even before they complete a workout this session.
+  useEffect(() => {
+    if (!user?.uid) return
+    const syncFromFirestore = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid, 'gamification', 'data'))
+        if (snap.exists()) {
+          const level = snap.data().currentRank
+          if (level) syncRankTheme(level)
+        }
+      } catch {
+        // Non-critical — theme falls back to persisted localStorage value
+      }
+    }
+    syncFromFirestore()
+  }, [user?.uid, syncRankTheme])
 
   // Still resolving auth / allowlist / profile
   if (loading || (user && (isAllowed === null || hasProfile === null))) {

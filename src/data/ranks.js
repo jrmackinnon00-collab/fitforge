@@ -47,7 +47,7 @@ export const RANKS = [
     icon: '⚒️',
     theme: 'silver+',
     colour: '#a8a9ad',
-    perk: 'AI Workout Tip of the Week unlocked.',
+    perk: 'Weekly FP summary unlocked — see your Forge Points earned this week on the Dashboard.',
   },
   {
     level: 6,
@@ -65,7 +65,7 @@ export const RANKS = [
     icon: '💎',
     theme: 'gold+',
     colour: '#ffb700',
-    perk: 'Advanced volume analytics unlocked.',
+    perk: 'Volume King badge now attainable — lift 1,000,000 lbs total to earn this rare achievement.',
   },
   {
     level: 8,
@@ -74,7 +74,7 @@ export const RANKS = [
     icon: '🔱',
     theme: 'steel',
     colour: '#4a90d9',
-    perk: 'Historical plan comparison view unlocked.',
+    perk: 'Session archives active — tap any past workout in Progress to review every set and rep.',
   },
   {
     level: 9,
