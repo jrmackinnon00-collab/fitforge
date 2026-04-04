@@ -17,6 +17,7 @@ import LogWorkout from './screens/LogWorkout'
 import Progress from './screens/Progress'
 import ProfileScreen from './screens/ProfileScreen'
 import Achievements from './screens/Achievements'
+import LogMovement from './screens/LogMovement'
 
 /**
  * Check whether a Firebase UID is on the approved allowlist.
@@ -184,6 +185,7 @@ function App() {
           <Route path="progress" element={<Progress />} />
           <Route path="profile" element={<ProfileScreen />} />
           <Route path="achievements" element={<Achievements />} />
+          <Route path="movement" element={<LogMovement />} />
         </Route>
 
         <Route path="*" element={<Navigate to={homeRoute} replace />} />

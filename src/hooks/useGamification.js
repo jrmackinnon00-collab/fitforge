@@ -545,5 +545,149 @@ export function useGamification(uid) {
     }
   }, [uid])
 
-  return { processSession, gamification, loading }
+  /**
+   * processMovementSession — call after saving a movement session.
+   * Updates streak (so cardio counts alongside strength) and awards base FP.
+   *
+   * @param {object} session  — the movement document just saved
+   * @param {object} profile  — user profile
+   * @returns {object}        — { newPoints, fpEvents, newBadges, rankUp }
+   */
+  const processMovementSession = useCallback(async (session, profile) => {
+    if (!uid) return null
+
+    let gam
+    try {
+      const snap = await getDoc(gamRef(uid))
+      gam = snap.exists() ? snap.data() : { ...DEFAULT_GAM }
+    } catch {
+      gam = { ...DEFAULT_GAM }
+    }
+
+    gam = JSON.parse(JSON.stringify(gam))
+    if (!gam.stats) gam.stats = { ...DEFAULT_GAM.stats }
+    if (!gam.streakData) gam.streakData = { ...DEFAULT_GAM.streakData }
+    if (!gam.pointsHistory) gam.pointsHistory = []
+    if (!gam.earnedBadges) gam.earnedBadges = []
+
+    const sessionDate = session.date || todayStr()
+
+    // ── Update streak (identical logic to processSession) ──────────────────
+    const lastActive = gam.streakData.lastActiveDate
+    const daysSinceLast = daysBetween(lastActive, sessionDate)
+    const gapReturn = lastActive && daysSinceLast >= 14
+
+    if (!lastActive || daysSinceLast > 3) {
+      gam.streakData.currentStreakDays = 1
+    } else if (daysSinceLast >= 1) {
+      gam.streakData.currentStreakDays += 1
+    }
+    gam.streakData.longestStreak = Math.max(
+      gam.streakData.longestStreak,
+      gam.streakData.currentStreakDays
+    )
+    gam.streakData.lastActiveDate = sessionDate
+    if (!gam.streakData.activeDays.includes(sessionDate)) {
+      gam.streakData.activeDays.push(sessionDate)
+      if (gam.streakData.activeDays.length > 400) {
+        gam.streakData.activeDays = gam.streakData.activeDays.slice(-400)
+      }
+    }
+
+    // ── Update movement-specific stats ─────────────────────────────────────
+    gam.stats.totalMovementSessions = (gam.stats.totalMovementSessions || 0) + 1
+
+    // ── FP events ──────────────────────────────────────────────────────────
+    const fpEvents = []
+    let sessionFP = 0
+    const addFP = (event, points) => {
+      fpEvents.push({ event, points, timestamp: new Date().toISOString() })
+      sessionFP += points
+    }
+
+    // Base award: 30 FP per movement session (cap 60/day)
+    const todayMovementFP = gam.pointsHistory
+      .filter((e) => e.timestamp?.startsWith(sessionDate) && e.event === 'movement_complete')
+      .reduce((s, e) => s + e.points, 0)
+    if (todayMovementFP < 60) {
+      addFP('movement_complete', Math.min(30, 60 - todayMovementFP))
+    }
+
+    // Streak milestones (shared with strength sessions)
+    const streak = gam.streakData.currentStreakDays
+    const streakMilestones = [
+      { days: 7,  key: 'streak_7',  points: 150 },
+      { days: 30, key: 'streak_30', points: 500 },
+      { days: 90, key: 'streak_90', points: 1500 },
+    ]
+    for (const m of streakMilestones) {
+      if (streak >= m.days) {
+        const alreadyAwarded = gam.pointsHistory.some((e) => e.event === m.key)
+        if (!alreadyAwarded) addFP(m.key, m.points)
+      }
+    }
+
+    // Comeback Kid
+    if (gapReturn) {
+      const alreadyEarnedComebackKid = gam.earnedBadges.some((b) => b.badgeId === 'comeback_kid')
+      if (!alreadyEarnedComebackKid) { /* badge handled below */ }
+    }
+
+    // ── Update points ──────────────────────────────────────────────────────
+    const previousPoints = gam.totalPoints || 0
+    gam.totalPoints = previousPoints + sessionFP
+    gam.pointsHistory = [...gam.pointsHistory, ...fpEvents].slice(-100)
+
+    // ── Rank check ─────────────────────────────────────────────────────────
+    const previousRank = getRankForPoints(previousPoints)
+    const newRank      = getRankForPoints(gam.totalPoints)
+    const rankUp = newRank.level > previousRank.level ? newRank : null
+    gam.currentRank = newRank.level
+
+    // ── Badge checks (streak + comeback only — no strength-specific badges) ─
+    const alreadyEarned = new Set(gam.earnedBadges.map((b) => b.badgeId))
+    const newBadges = []
+    const checkBadge = (badgeId, condition) => {
+      if (alreadyEarned.has(badgeId) || !condition) return
+      const badge = BADGE_MAP[badgeId]
+      if (!badge) return
+      newBadges.push({ badgeId, earnedAt: new Date().toISOString() })
+      alreadyEarned.add(badgeId)
+      gam.totalPoints += badge.pointsAwarded
+      gam.pointsHistory.push({
+        event: `badge_${badgeId}`,
+        points: badge.pointsAwarded,
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    checkBadge('week_warrior',      streak >= 7)
+    checkBadge('monthly_grind',     streak >= 30)
+    checkBadge('quarterly_athlete', streak >= 90)
+    checkBadge('year_of_iron',      streak >= 365)
+    checkBadge('comeback_kid',      gapReturn)
+
+    gam.earnedBadges = [...gam.earnedBadges, ...newBadges]
+
+    const finalRank = getRankForPoints(gam.totalPoints)
+    const finalRankUp = finalRank.level > previousRank.level ? finalRank : rankUp
+    gam.currentRank = finalRank.level
+
+    try {
+      await setDoc(gamRef(uid), gam)
+    } catch (err) {
+      console.error('Failed to save gamification data after movement:', err)
+    }
+
+    setGamification(gam)
+
+    return {
+      newPoints: sessionFP,
+      fpEvents,
+      newBadges: newBadges.map((b) => BADGE_MAP[b.badgeId]),
+      rankUp: finalRankUp,
+    }
+  }, [uid])
+
+  return { processSession, processMovementSession, gamification, loading }
 }

@@ -9,7 +9,8 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import RankCard from '../components/RankCard'
 import { useGamification } from '../hooks/useGamification'
 import { getRankForPoints } from '../data/ranks'
-import { Dumbbell, Calendar, Flame, Trophy, Play, Trash2, TrendingUp, Zap } from 'lucide-react'
+import { Dumbbell, Calendar, Flame, Trophy, Play, Trash2, TrendingUp, Zap, PersonStanding } from 'lucide-react'
+import { ACTIVITY_MAP } from '../data/movementActivities'
 import WorkoutDetailSheet from '../components/WorkoutDetailSheet'
 
 // ─── Volume comparison helper ─────────────────────────────────────────────────
@@ -43,6 +44,8 @@ function Dashboard() {
   })
   const [recentSessions, setRecentSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
+  const [recentMovement, setRecentMovement] = useState([])
+  const [movementThisWeek, setMovementThisWeek] = useState(0)
 
   useEffect(() => {
     if (user) {
@@ -86,6 +89,22 @@ function Dashboard() {
       if (!activePlanSnap.empty) {
         activePlanName = activePlanSnap.docs[0].data().planName || 'Unnamed Plan'
       }
+
+      // Movement data
+      const movementRef = collection(db, 'users', user.uid, 'movement')
+      const recentMovementQuery = query(movementRef, orderBy('date', 'desc'), limit(3))
+      const recentMovementSnap = await getDocs(recentMovementQuery)
+      const movementSessions = recentMovementSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      setRecentMovement(movementSessions)
+
+      // Movement sessions this week
+      const weekStart = new Date()
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+      weekStart.setHours(0, 0, 0, 0)
+      const weekStartStr = weekStart.toISOString().split('T')[0]
+      const movementWeekQuery = query(movementRef, where('date', '>=', weekStartStr))
+      const movementWeekSnap = await getDocs(movementWeekQuery)
+      setMovementThisWeek(movementWeekSnap.size)
 
       // Calculate streak
       const streak = calculateStreak(allSessionsSnap.docs.map((d) => d.data().date))
@@ -276,14 +295,81 @@ function Dashboard() {
         )
       })()}
 
-      {/* Quick Start Button */}
-      <button
-        onClick={() => navigate('/dashboard/log')}
-        className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 min-h-[56px] shadow-lg shadow-orange-500/20"
+      {/* Quick Start Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => navigate('/dashboard/log')}
+          className="flex-1 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 min-h-[56px] shadow-lg shadow-orange-500/20"
+        >
+          <Play size={20} fill="white" />
+          Workout
+        </button>
+        <button
+          onClick={() => navigate('/dashboard/movement')}
+          className="flex-1 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 min-h-[56px]"
+        >
+          <PersonStanding size={20} />
+          Movement
+        </button>
+      </div>
+
+      {/* Movement Activity Tile */}
+      <div
+        onClick={() => navigate('/dashboard/movement')}
+        className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 cursor-pointer active:scale-[0.98] transition-transform"
       >
-        <Play size={20} fill="white" />
-        Start Today's Workout
-      </button>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-500/10 rounded-xl flex items-center justify-center">
+              <PersonStanding size={16} className="text-blue-500" />
+            </div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">Movement</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-blue-500 bg-blue-500/10 rounded-full px-2.5 py-1">
+              {movementThisWeek} this week
+            </span>
+            <span className="text-blue-500 text-sm font-medium">+ Log</span>
+          </div>
+        </div>
+
+        {recentMovement.length === 0 ? (
+          <p className="text-slate-400 text-sm">No movement logged yet — tap to add your first activity.</p>
+        ) : (
+          <div className="space-y-2">
+            {recentMovement.map((m) => {
+              const act = ACTIVITY_MAP[m.activityId]
+              const distUnit = m.distanceUnit || 'miles'
+              return (
+                <div key={m.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg leading-none">{act?.icon || '💪'}</span>
+                    <div>
+                      <p className="text-slate-800 dark:text-slate-200 text-sm font-semibold leading-tight">
+                        {m.activityLabel}
+                      </p>
+                      <p className="text-slate-400 text-xs">
+                        {m.duration} min
+                        {m.distance ? ` · ${m.distance} ${distUnit}` : ''}
+                        {m.steps ? ` · ${Number(m.steps).toLocaleString()} steps` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-slate-400 text-xs">{(() => {
+                      const [y, mo, d] = m.date.split('-').map(Number)
+                      return new Date(y, mo - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    })()}</p>
+                    {m.estimatedCalories > 0 && (
+                      <p className="text-orange-500 text-xs font-semibold">{m.estimatedCalories} kcal</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Recent Workouts */}
       <div>
