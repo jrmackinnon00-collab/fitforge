@@ -12,6 +12,7 @@ import { getRankForPoints } from '../data/ranks'
 import { Dumbbell, Calendar, Flame, Trophy, Play, Trash2, TrendingUp, Zap, PersonStanding } from 'lucide-react'
 import { ACTIVITY_MAP } from '../data/movementActivities'
 import WorkoutDetailSheet from '../components/WorkoutDetailSheet'
+import EditSessionSheet from '../components/EditSessionSheet'
 
 // ─── Volume comparison helper ─────────────────────────────────────────────────
 // volumeLbs should always be in lbs for threshold comparison.
@@ -34,7 +35,7 @@ function Dashboard() {
   const { user } = useAuthStore()
   const { profile } = useProfileStore()
   const navigate = useNavigate()
-  const { gamification } = useGamification(user?.uid)
+  const { gamification, rebuildGamification } = useGamification(user?.uid)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalWorkouts: 0,
@@ -44,6 +45,7 @@ function Dashboard() {
   })
   const [recentSessions, setRecentSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
+  const [editingSession, setEditingSession] = useState(null)
   const [recentMovement, setRecentMovement] = useState([])
   const [movementThisWeek, setMovementThisWeek] = useState(0)
 
@@ -129,10 +131,20 @@ function Dashboard() {
       await deleteDoc(doc(db, 'users', user.uid, 'sessions', sessionId))
       setRecentSessions((prev) => prev.filter((s) => s.id !== sessionId))
       setStats((prev) => ({ ...prev, totalWorkouts: Math.max(0, prev.totalWorkouts - 1) }))
+      await rebuildGamification(profile)
     } catch (err) {
       console.error('Error deleting session:', err)
       alert('Failed to delete workout. Please try again.')
     }
+  }
+
+  const handleSessionSaved = async (updatedSession) => {
+    setEditingSession(null)
+    setSelectedSession(null)
+    setRecentSessions((prev) =>
+      prev.map((s) => (s.id === updatedSession.id ? updatedSession : s))
+    )
+    await rebuildGamification(profile)
   }
 
   const calculateStreak = (dates) => {
@@ -446,11 +458,22 @@ function Dashboard() {
       </div>
 
       {/* Workout Detail Sheet */}
-      {selectedSession && (
+      {selectedSession && !editingSession && (
         <WorkoutDetailSheet
           session={selectedSession}
           unit={profile?.weightUnit || 'lbs'}
           onClose={() => setSelectedSession(null)}
+          onEdit={(s) => { setEditingSession(s); setSelectedSession(null) }}
+        />
+      )}
+
+      {/* Edit Session Sheet */}
+      {editingSession && (
+        <EditSessionSheet
+          session={editingSession}
+          unit={profile?.weightUnit || 'lbs'}
+          onClose={() => setEditingSession(null)}
+          onSaved={handleSessionSaved}
         />
       )}
     </div>

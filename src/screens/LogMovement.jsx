@@ -54,7 +54,8 @@ export default function LogMovement() {
 
   // ── Derived values ───────────────────────────────────────────────────────────
   const selectedActivity = MOVEMENT_ACTIVITIES.find((a) => a.id === activityId)
-  const distanceUnit = profile?.weightUnit === 'kg' ? 'km' : 'miles'
+  const profileDefault = profile?.weightUnit === 'kg' ? 'km' : 'miles'
+  const [distanceUnit, setDistanceUnit] = useState(profileDefault)
 
   // Body weight in kg for calorie calc (profile stores weight in user's preferred unit)
   const bodyWeightKg = (() => {
@@ -212,9 +213,28 @@ export default function LogMovement() {
 
         {/* Distance — shown for applicable activities */}
         <div>
-          <label className="block text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">
-            Distance ({distanceUnit})
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+              Distance
+            </label>
+            {/* Miles / KM toggle */}
+            <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600 text-xs font-semibold">
+              {['miles', 'km'].map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  onClick={() => setDistanceUnit(u)}
+                  className={`px-2.5 py-1 transition-colors ${
+                    distanceUnit === u
+                      ? 'bg-orange-500 text-white'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="relative">
             <ArrowLeftRight size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input

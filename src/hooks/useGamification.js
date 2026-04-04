@@ -689,5 +689,333 @@ export function useGamification(uid) {
     }
   }, [uid])
 
-  return { processSession, processMovementSession, gamification, loading }
+  /**
+   * rebuildGamification — recompute ALL gamification data from scratch.
+   * Call after editing or deleting a session so totals stay accurate.
+   *
+   * @param {object} profile — current user profile
+   * @returns {object}       — rebuilt gamification document
+   */
+  const rebuildGamification = useCallback(async (profile) => {
+    if (!uid) return null
+
+    // ── Load existing gam to preserve plan-completion data ───────────────────
+    let existingGam = { ...DEFAULT_GAM }
+    try {
+      const snap = await getDoc(gamRef(uid))
+      if (snap.exists()) existingGam = snap.data()
+    } catch {}
+
+    // ── Fresh slate ──────────────────────────────────────────────────────────
+    const gam = JSON.parse(JSON.stringify(DEFAULT_GAM))
+    if (!gam.stats) gam.stats = { ...DEFAULT_GAM.stats }
+    gam.weeklySessionTarget = profile?.daysPerWeek || existingGam.weeklySessionTarget || 4
+
+    // Preserve plan-completion data (requires fetching plan docs to recalculate;
+    // this is preserved as-is since edit/delete rarely affects plan completion).
+    gam.stats.plansCompleted       = existingGam.stats?.plansCompleted || 0
+    gam.stats.graduatedPlanIds     = existingGam.stats?.graduatedPlanIds || []
+    gam.stats.profileSetupAwarded  = existingGam.stats?.profileSetupAwarded || false
+
+    // ── Fetch all sessions (strength + movement) ─────────────────────────────
+    const [strengthSnap, movementSnap] = await Promise.all([
+      getDocs(query(collection(db, 'users', uid, 'sessions'), orderBy('date', 'asc'))),
+      getDocs(query(collection(db, 'users', uid, 'movement'), orderBy('date', 'asc'))),
+    ])
+    const strengthSessions = strengthSnap.docs.map((d) => ({ ...d.data(), _type: 'strength' }))
+    const movementSessions = movementSnap.docs.map((d) => ({ ...d.data(), _type: 'movement' }))
+    const allSessions = [...strengthSessions, ...movementSessions].sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1
+      return (a.completedAt || '') < (b.completedAt || '') ? -1 : 1
+    })
+
+    // ── Per-exercise running best (for PR / overload detection) ─────────────
+    const prevBest = {}  // { name: { maxWeight, maxReps, sessionCount } }
+
+    // ── FP accumulation ──────────────────────────────────────────────────────
+    const fpEvents = []
+    const awardedStreakMilestones  = new Set()
+    const awardedPerfectWeekKeys   = new Set()
+    const sessionFPByDay           = {}   // strength cap: 100/day
+    const movementFPByDay          = {}   // movement cap: 60/day
+
+    // ── Single-session badge trigger flags ───────────────────────────────────
+    let hasNightOwl    = false
+    let hasEarlyBird   = false
+    let hasBirthday    = false
+    let hasNewYear     = false
+    let hasDeadOfWinter = false
+    let hasLongHaul    = false
+    let hasQuickDraw   = false
+    let hasMaxEffort   = false
+    let hasEasySunday  = false
+    let hasTripleThreat = false
+    let hasGapReturn   = false
+
+    // ── Process each session chronologically ─────────────────────────────────
+    for (const session of allSessions) {
+      const sessionDate    = session.date
+      const completedAt    = new Date(session.completedAt || sessionDate)
+      const sessionHour    = completedAt.getHours()
+      const sessionDOW     = completedAt.getDay()
+      const sessionDuration = session.duration || 0
+      const isStrength     = session._type === 'strength'
+
+      // ── Streak ────────────────────────────────────────────────────────────
+      const lastActive    = gam.streakData.lastActiveDate
+      const daysSinceLast = daysBetween(lastActive, sessionDate)
+      const gapReturn     = lastActive && daysSinceLast >= 14
+      if (gapReturn) hasGapReturn = true
+
+      if (!lastActive || daysSinceLast > 3) {
+        gam.streakData.currentStreakDays = 1
+      } else if (daysSinceLast >= 1) {
+        gam.streakData.currentStreakDays += 1
+      }
+      gam.streakData.longestStreak = Math.max(
+        gam.streakData.longestStreak,
+        gam.streakData.currentStreakDays
+      )
+      gam.streakData.lastActiveDate = sessionDate
+      if (!gam.streakData.activeDays.includes(sessionDate)) {
+        gam.streakData.activeDays.push(sessionDate)
+        if (gam.streakData.activeDays.length > 400) {
+          gam.streakData.activeDays = gam.streakData.activeDays.slice(-400)
+        }
+      }
+
+      // ── Monday streak ─────────────────────────────────────────────────────
+      if (sessionDOW === 1) {
+        const lastMonday = gam.stats.lastMondayDate
+        if (lastMonday) {
+          const weeksSince = daysBetween(lastMonday, sessionDate) / 7
+          if (weeksSince >= 1 && weeksSince < 2) gam.stats.mondayStreak = (gam.stats.mondayStreak || 0) + 1
+          else gam.stats.mondayStreak = 1
+        } else {
+          gam.stats.mondayStreak = 1
+        }
+        gam.stats.lastMondayDate = sessionDate
+      }
+
+      // ── Perfect week ──────────────────────────────────────────────────────
+      const target    = profile?.daysPerWeek || gam.weeklySessionTarget || 4
+      const swDate    = new Date(sessionDate)
+      const swDOW     = swDate.getDay() === 0 ? 6 : swDate.getDay() - 1
+      const swStart   = new Date(swDate)
+      swStart.setDate(swDate.getDate() - swDOW)
+      const weekDays  = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(swStart)
+        d.setDate(swStart.getDate() + i)
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+      })
+      const sessionsThisWeek = gam.streakData.activeDays.filter((d) => weekDays.includes(d)).length
+      if (sessionsThisWeek >= target) {
+        const weekKey = weekDays[0]
+        if (!gam.stats.perfectWeekDates) gam.stats.perfectWeekDates = []
+        if (!gam.stats.perfectWeekDates.includes(weekKey)) {
+          gam.stats.perfectWeekDates.push(weekKey)
+          gam.perfectWeeks = (gam.perfectWeeks || 0) + 1
+        }
+        if (!awardedPerfectWeekKeys.has(weekKey)) {
+          awardedPerfectWeekKeys.add(weekKey)
+          fpEvents.push({ event: 'perfect_week', points: 200, timestamp: completedAt.toISOString(), weekKey })
+        }
+      }
+
+      // ── Streak milestone FP ───────────────────────────────────────────────
+      const streak = gam.streakData.currentStreakDays
+      const streakMilestones = [
+        { days: 7,  key: 'streak_7',  points: 150 },
+        { days: 30, key: 'streak_30', points: 500 },
+        { days: 90, key: 'streak_90', points: 1500 },
+      ]
+      for (const m of streakMilestones) {
+        if (streak >= m.days && !awardedStreakMilestones.has(m.key)) {
+          awardedStreakMilestones.add(m.key)
+          fpEvents.push({ event: m.key, points: m.points, timestamp: completedAt.toISOString() })
+        }
+      }
+
+      // ── Per-type processing ───────────────────────────────────────────────
+      if (isStrength) {
+        const exercises = session.exercises || []
+        gam.stats.totalSessions = (gam.stats.totalSessions || 0) + 1
+
+        const volume = sessionVolume(exercises)
+        gam.stats.totalVolumeLbs = (gam.stats.totalVolumeLbs || 0) + volume
+
+        if (isBodyweightSession(exercises)) {
+          gam.stats.bodyweightOnlySessions = (gam.stats.bodyweightOnlySessions || 0) + 1
+        }
+
+        // PR & overload detection against prevBest
+        let prCount = 0
+        let weightOverloads = 0
+        let repOverloads = 0
+        const overloadedEx = new Set()
+        for (const ex of exercises) {
+          const sets = ex.sets || []
+          const maxW = Math.max(...sets.map((s) => Number(s.weight) || 0), 0)
+          const maxR = Math.max(...sets.map((s) => Number(s.reps) || 0), 0)
+          const prev = prevBest[ex.name]
+          if (prev) {
+            if (maxW > prev.maxWeight || maxR > prev.maxReps) prCount++
+            if (prev.sessionCount >= 3) {
+              if (maxW > prev.maxWeight) { weightOverloads++; overloadedEx.add(ex.name) }
+              else if (maxR > prev.maxReps) { repOverloads++; overloadedEx.add(ex.name) }
+            }
+          }
+          // Update prevBest
+          if (!prevBest[ex.name]) {
+            prevBest[ex.name] = { maxWeight: maxW, maxReps: maxR, sessionCount: 1 }
+          } else {
+            prevBest[ex.name] = {
+              maxWeight: Math.max(prevBest[ex.name].maxWeight, maxW),
+              maxReps:   Math.max(prevBest[ex.name].maxReps, maxR),
+              sessionCount: prevBest[ex.name].sessionCount + 1,
+            }
+          }
+        }
+        prCount = Math.min(prCount, 5)
+        gam.stats.totalPRs = (gam.stats.totalPRs || 0) + prCount
+        if (overloadedEx.size > 0) {
+          gam.stats.totalProgressiveExercises = (gam.stats.totalProgressiveExercises || 0) + overloadedEx.size
+        }
+        if (prCount >= 3) hasTripleThreat = true
+
+        // Repeat sessions
+        if (session.planId && session.dayLabel) {
+          const key = `${session.planId}_${session.dayLabel}`
+          if (!gam.stats.repeatSessions) gam.stats.repeatSessions = {}
+          gam.stats.repeatSessions[key] = (gam.stats.repeatSessions[key] || 0) + 1
+        }
+
+        // Hidden badge flags (strength only)
+        if (sessionHour >= 0 && sessionHour < 5) hasNightOwl = true
+        if (sessionHour >= 5 && sessionHour < 6) hasEarlyBird = true
+        if (sessionDuration >= 90) hasLongHaul = true
+        if (sessionDuration > 0 && sessionDuration < 30) hasQuickDraw = true
+        const rpe = avgRPE(exercises)
+        if (rpe !== null && rpe >= 9) hasMaxEffort = true
+        if (rpe !== null && rpe <= 4) hasEasySunday = true
+
+        // Birthday / special-date badges
+        if (profile?.dateOfBirth) {
+          const dob = new Date(profile.dateOfBirth)
+          const sd  = new Date(sessionDate)
+          if (dob.getMonth() === sd.getMonth() && dob.getDate() === sd.getDate()) hasBirthday = true
+        }
+        const sdDate = new Date(sessionDate)
+        if (sdDate.getMonth() === 0  && sdDate.getDate() === 1)  hasNewYear = true
+        if (sdDate.getMonth() === 11 && sdDate.getDate() === 21) hasDeadOfWinter = true
+
+        // FP: strength session (cap 100/day)
+        const dayFP = sessionFPByDay[sessionDate] || 0
+        if (dayFP < 100) {
+          const earned = Math.min(50, 100 - dayFP)
+          fpEvents.push({ event: 'session_complete', points: earned, timestamp: completedAt.toISOString() })
+          sessionFPByDay[sessionDate] = dayFP + earned
+        }
+        for (let i = 0; i < prCount; i++) fpEvents.push({ event: 'personal_record', points: 100, timestamp: completedAt.toISOString() })
+        for (let i = 0; i < weightOverloads; i++) fpEvents.push({ event: 'weight_increase', points: 30, timestamp: completedAt.toISOString() })
+        for (let i = 0; i < repOverloads; i++) fpEvents.push({ event: 'rep_increase', points: 20, timestamp: completedAt.toISOString() })
+        if (gam.stats.totalSessions === 1) fpEvents.push({ event: 'first_workout', points: 50, timestamp: completedAt.toISOString() })
+
+      } else {
+        // Movement session
+        gam.stats.totalMovementSessions = (gam.stats.totalMovementSessions || 0) + 1
+        const dayMFP = movementFPByDay[sessionDate] || 0
+        if (dayMFP < 60) {
+          const earned = Math.min(30, 60 - dayMFP)
+          fpEvents.push({ event: 'movement_complete', points: earned, timestamp: completedAt.toISOString() })
+          movementFPByDay[sessionDate] = dayMFP + earned
+        }
+      }
+    }
+
+    // Profile setup FP (one-time, preserved flag)
+    if (gam.stats.profileSetupAwarded) {
+      fpEvents.push({ event: 'profile_setup', points: 100, timestamp: new Date().toISOString() })
+    }
+
+    // ── Compute total base FP ────────────────────────────────────────────────
+    gam.totalPoints = fpEvents.reduce((s, e) => s + (e.points || 0), 0)
+    gam.pointsHistory = fpEvents.slice(-100)
+
+    // ── Badge evaluation ──────────────────────────────────────────────────────
+    const maxRepeatSession = gam.stats.repeatSessions
+      ? Math.max(...Object.values(gam.stats.repeatSessions), 0)
+      : 0
+    const thisMonth = new Date().toISOString().slice(0, 7)
+    const perfectWeeksThisMonth = (gam.stats.perfectWeekDates || []).filter(
+      (d) => d.startsWith(thisMonth)
+    ).length
+
+    const newBadges = []
+    const checkBadge = (badgeId, condition) => {
+      if (!condition) return
+      const badge = BADGE_MAP[badgeId]
+      if (!badge) return
+      newBadges.push({ badgeId, earnedAt: new Date().toISOString() })
+      gam.totalPoints += badge.pointsAwarded
+      gam.pointsHistory.push({
+        event: `badge_${badgeId}`,
+        points: badge.pointsAwarded,
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    const streak = gam.streakData.currentStreakDays
+    checkBadge('first_rep',          gam.stats.totalSessions >= 1)
+    checkBadge('showing_up',         gam.stats.totalSessions >= 10)
+    checkBadge('habitual',           gam.stats.totalSessions >= 25)
+    checkBadge('century',            gam.stats.totalSessions >= 100)
+    checkBadge('iron_commitment',    gam.stats.totalSessions >= 250)
+    checkBadge('first_pr',           gam.stats.totalPRs >= 1)
+    checkBadge('record_breaker',     gam.stats.totalPRs >= 10)
+    checkBadge('pr_machine',         gam.stats.totalPRs >= 50)
+    checkBadge('progresser',         gam.stats.totalProgressiveExercises >= 5)
+    checkBadge('volume_king',        gam.stats.totalVolumeLbs >= 1000000 && getRankForPoints(gam.totalPoints).level >= 7)
+    checkBadge('plan_graduate',      gam.stats.plansCompleted >= 1)
+    checkBadge('double_down',        gam.stats.plansCompleted >= 2)
+    checkBadge('program_collector',  gam.stats.plansCompleted >= 5)
+    checkBadge('week_warrior',       streak >= 7)
+    checkBadge('monthly_grind',      streak >= 30)
+    checkBadge('quarterly_athlete',  streak >= 90)
+    checkBadge('year_of_iron',       streak >= 365)
+    checkBadge('perfect_week',       (gam.perfectWeeks || 0) >= 1)
+    checkBadge('flawless_month',     perfectWeeksThisMonth >= 4)
+    checkBadge('night_owl',          hasNightOwl)
+    checkBadge('early_bird',         hasEarlyBird)
+    checkBadge('birthday_gains',     hasBirthday)
+    checkBadge('new_year_lifts',     hasNewYear)
+    checkBadge('dead_of_winter',     hasDeadOfWinter)
+    checkBadge('monday_warrior',     (gam.stats.mondayStreak || 0) >= 4)
+    checkBadge('comeback_kid',       hasGapReturn)
+    checkBadge('the_long_haul',      hasLongHaul)
+    checkBadge('quick_draw',         hasQuickDraw)
+    checkBadge('max_effort',         hasMaxEffort)
+    checkBadge('easy_sunday',        hasEasySunday)
+    checkBadge('the_purist',         (gam.stats.bodyweightOnlySessions || 0) >= 10)
+    checkBadge('triple_threat',      hasTripleThreat)
+    checkBadge('groundhog_gains',    maxRepeatSession >= 5)
+
+    gam.earnedBadges = newBadges
+
+    // ── Final rank ────────────────────────────────────────────────────────────
+    const finalRank  = getRankForPoints(gam.totalPoints)
+    gam.currentRank  = finalRank.level
+
+    // ── Save ─────────────────────────────────────────────────────────────────
+    try {
+      await setDoc(gamRef(uid), gam)
+    } catch (err) {
+      console.error('Failed to save rebuilt gamification:', err)
+    }
+
+    setGamification(gam)
+    return gam
+  }, [uid])
+
+  return { processSession, processMovementSession, rebuildGamification, gamification, loading }
 }

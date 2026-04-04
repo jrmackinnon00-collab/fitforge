@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { collection, getDocs, orderBy, query, deleteDoc, doc } from 'firebase/firestore'
+import { useGamification } from '../hooks/useGamification'
 import { db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
 import useProfileStore from '../store/useProfileStore'
@@ -7,8 +8,9 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Pencil } from 'lucide-react'
 import WorkoutDetailSheet from '../components/WorkoutDetailSheet'
+import EditSessionSheet from '../components/EditSessionSheet'
 import CalendarHeatmap from 'react-calendar-heatmap'
 import 'react-calendar-heatmap/dist/styles.css'
 
@@ -17,11 +19,13 @@ const TABS = ['Overview', 'By Exercise', 'Consistency']
 function Progress() {
   const { user } = useAuthStore()
   const { profile } = useProfileStore()
+  const { rebuildGamification } = useGamification(user?.uid)
   const [activeTab, setActiveTab] = useState(0)
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedExercise, setSelectedExercise] = useState('')
   const [selectedSession, setSelectedSession] = useState(null)
+  const [editingSession, setEditingSession] = useState(null)
 
   useEffect(() => {
     if (user) fetchSessions()
@@ -47,10 +51,20 @@ function Progress() {
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'sessions', sessionId))
       setSessions((prev) => prev.filter((s) => s.id !== sessionId))
+      await rebuildGamification(profile)
     } catch (err) {
       console.error('Error deleting session:', err)
       alert('Failed to delete workout. Please try again.')
     }
+  }
+
+  const handleSessionSaved = async (updatedSession) => {
+    setEditingSession(null)
+    setSelectedSession(null)
+    setSessions((prev) =>
+      prev.map((s) => (s.id === updatedSession.id ? updatedSession : s))
+    )
+    await rebuildGamification(profile)
   }
 
   // All exercise names from sessions
@@ -343,13 +357,22 @@ function Progress() {
                         {session.exercises?.length ? ` · ${session.exercises.length} exercise${session.exercises.length !== 1 ? 's' : ''}` : ''}
                       </p>
                     </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteSession(session.id) }}
-                      className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      title="Delete workout"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingSession(session) }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                        title="Edit workout"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteSession(session.id) }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        title="Delete workout"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -572,11 +595,22 @@ function Progress() {
         </div>
       )}
       {/* Workout Detail Sheet */}
-      {selectedSession && (
+      {selectedSession && !editingSession && (
         <WorkoutDetailSheet
           session={selectedSession}
           unit={unit}
           onClose={() => setSelectedSession(null)}
+          onEdit={(s) => { setEditingSession(s); setSelectedSession(null) }}
+        />
+      )}
+
+      {/* Edit Session Sheet */}
+      {editingSession && (
+        <EditSessionSheet
+          session={editingSession}
+          unit={unit}
+          onClose={() => setEditingSession(null)}
+          onSaved={handleSessionSaved}
         />
       )}
     </div>

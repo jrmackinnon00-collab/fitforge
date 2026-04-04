@@ -1,4 +1,4 @@
-import { X, Clock, Calendar } from 'lucide-react'
+import { X, Clock, Calendar, Pencil } from 'lucide-react'
 
 function formatDisplayDate(iso) {
   if (!iso) return ''
@@ -9,7 +9,7 @@ function formatDisplayDate(iso) {
   })
 }
 
-function WorkoutDetailSheet({ session, unit = 'lbs', onClose }) {
+function WorkoutDetailSheet({ session, unit = 'lbs', onClose, onEdit }) {
   if (!session) return null
 
   // Compute session totals for the summary bar
@@ -62,12 +62,23 @@ function WorkoutDetailSheet({ session, unit = 'lbs', onClose }) {
                 )}
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <X size={16} />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(session)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 transition-colors"
+                  title="Edit workout"
+                >
+                  <Pencil size={15} />
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
           {/* Quick-stats bar */}
