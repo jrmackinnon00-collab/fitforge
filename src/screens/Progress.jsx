@@ -19,7 +19,7 @@ const TABS = ['Overview', 'By Exercise', 'Consistency']
 function Progress() {
   const { user } = useAuthStore()
   const { profile } = useProfileStore()
-  const { rebuildGamification } = useGamification(user?.uid)
+  const { rebuildGamification, gamification } = useGamification(user?.uid)
   const [activeTab, setActiveTab] = useState(0)
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -112,28 +112,7 @@ function Progress() {
     return Object.entries(byDate).map(([date, count]) => ({ date, count }))
   }, [sessions])
 
-  // Streak — continued if gap between workout days is ≤ 3 days
-  const streak = useMemo(() => {
-    const dates = [...new Set(sessions.map((s) => s.date))].sort(
-      (a, b) => new Date(b) - new Date(a)
-    )
-    if (!dates.length) return 0
-    const today = new Date().toISOString().split('T')[0]
-    const daysSinceLatest = Math.round(
-      (new Date(today) - new Date(dates[0])) / 86400000
-    )
-    if (daysSinceLatest > 3) return 0
-    let count = 1
-    for (let i = 0; i < dates.length - 1; i++) {
-      const gap = Math.round(
-        (new Date(dates[i]) - new Date(dates[i + 1])) / 86400000
-      )
-      if (gap <= 3) {
-        count++
-      } else break
-    }
-    return count
-  }, [sessions])
+  const streak = gamification?.streakData?.currentStreakDays ?? 0
 
   // Exercise-specific data
   const exerciseData = useMemo(() => {
@@ -349,9 +328,7 @@ function Progress() {
                       </p>
                       <p className="text-slate-400 text-xs">
                         {session.date
-                          ? new Date(session.date).toLocaleDateString('en-US', {
-                              weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-                            })
+                          ? (() => { const [y,m,d] = session.date.split('-'); return new Date(+y,+m-1,+d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) })()
                           : ''}
                         {session.duration ? ` · ${session.duration} min` : ''}
                         {session.exercises?.length ? ` · ${session.exercises.length} exercise${session.exercises.length !== 1 ? 's' : ''}` : ''}
@@ -598,9 +575,11 @@ function Progress() {
       {selectedSession && !editingSession && (
         <WorkoutDetailSheet
           session={selectedSession}
+          sessions={[...sessions].reverse()}
           unit={unit}
           onClose={() => setSelectedSession(null)}
           onEdit={(s) => { setEditingSession(s); setSelectedSession(null) }}
+          onNavigate={(s) => setSelectedSession(s)}
         />
       )}
 

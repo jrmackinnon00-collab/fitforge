@@ -1,4 +1,5 @@
-import { X, Clock, Calendar, Pencil } from 'lucide-react'
+import { useRef } from 'react'
+import { X, Clock, Calendar, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 
 function formatDisplayDate(iso) {
   if (!iso) return ''
@@ -9,8 +10,23 @@ function formatDisplayDate(iso) {
   })
 }
 
-function WorkoutDetailSheet({ session, unit = 'lbs', onClose, onEdit }) {
+function WorkoutDetailSheet({ session, sessions = [], unit = 'lbs', onClose, onEdit, onNavigate }) {
   if (!session) return null
+
+  const currentIndex = sessions.findIndex((s) => s.id === session.id)
+  const hasPrev = currentIndex > 0
+  const hasNext = currentIndex < sessions.length - 1
+
+  // Swipe support
+  const touchStartX = useRef(null)
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    touchStartX.current = null
+    if (dx > 60 && hasPrev) onNavigate(sessions[currentIndex - 1])
+    else if (dx < -60 && hasNext) onNavigate(sessions[currentIndex + 1])
+  }
 
   // Compute session totals for the summary bar
   let totalSets = 0
@@ -35,9 +51,34 @@ function WorkoutDetailSheet({ session, unit = 'lbs', onClose, onEdit }) {
       <div
         className="w-full max-w-md mx-auto bg-white dark:bg-slate-800 rounded-t-3xl shadow-2xl max-h-[88vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Drag handle */}
         <div className="w-10 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-0 shrink-0" />
+
+        {/* Prev / Next navigation */}
+        {sessions.length > 1 && (
+          <div className="flex items-center justify-between px-4 pt-3 pb-0 shrink-0">
+            <button
+              onClick={() => hasPrev && onNavigate(sessions[currentIndex - 1])}
+              disabled={!hasPrev}
+              className="flex items-center gap-1 text-xs font-semibold text-slate-400 disabled:opacity-30 hover:text-orange-500 transition-colors"
+            >
+              <ChevronLeft size={14} /> Prev
+            </button>
+            <span className="text-xs text-slate-300 dark:text-slate-600">
+              {currentIndex + 1} / {sessions.length}
+            </span>
+            <button
+              onClick={() => hasNext && onNavigate(sessions[currentIndex + 1])}
+              disabled={!hasNext}
+              className="flex items-center gap-1 text-xs font-semibold text-slate-400 disabled:opacity-30 hover:text-orange-500 transition-colors"
+            >
+              Next <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
 
         {/* Header */}
         <div className="px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-700 shrink-0">
