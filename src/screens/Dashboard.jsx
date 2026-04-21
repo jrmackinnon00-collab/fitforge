@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, query, orderBy, limit, getDocs, where, deleteDoc, doc } from 'firebase/firestore'
+import { collection, query, orderBy, limit, getDocs, where, deleteDoc, doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
 import useProfileStore from '../store/useProfileStore'
@@ -13,6 +13,7 @@ import { Dumbbell, Calendar, Flame, Trophy, Play, Trash2, TrendingUp, Zap, Perso
 import { ACTIVITY_MAP } from '../data/movementActivities'
 import WorkoutDetailSheet from '../components/WorkoutDetailSheet'
 import EditSessionSheet from '../components/EditSessionSheet'
+import ProductTour from '../components/ProductTour'
 
 // ─── Volume comparison helper ─────────────────────────────────────────────────
 // volumeLbs should always be in lbs for threshold comparison.
@@ -33,7 +34,7 @@ function getVolumeComparison(volume, unit) {
 
 function Dashboard() {
   const { user } = useAuthStore()
-  const { profile } = useProfileStore()
+  const { profile, updateProfile } = useProfileStore()
   const navigate = useNavigate()
   const { gamification, rebuildGamification } = useGamification(user?.uid)
   const [loading, setLoading] = useState(true)
@@ -48,12 +49,30 @@ function Dashboard() {
   const [editingSession, setEditingSession] = useState(null)
   const [recentMovement, setRecentMovement] = useState([])
   const [movementThisWeek, setMovementThisWeek] = useState(0)
+  const [showTour, setShowTour] = useState(false)
 
   useEffect(() => {
     if (user) {
       fetchDashboardData()
     }
   }, [user])
+
+  useEffect(() => {
+    if (profile && !profile.tourCompleted) {
+      const id = setTimeout(() => setShowTour(true), 800)
+      return () => clearTimeout(id)
+    }
+  }, [profile])
+
+  const handleTourComplete = async () => {
+    setShowTour(false)
+    try {
+      await setDoc(doc(db, 'users', user.uid, 'profile', 'data'), { tourCompleted: true }, { merge: true })
+      updateProfile({ tourCompleted: true })
+    } catch (err) {
+      console.error('Failed to save tour state:', err)
+    }
+  }
 
   const fetchDashboardData = async () => {
     setLoading(true)
@@ -476,6 +495,9 @@ function Dashboard() {
           onSaved={handleSessionSaved}
         />
       )}
+
+      {/* Product Tour */}
+      {showTour && <ProductTour onComplete={handleTourComplete} />}
     </div>
   )
 }

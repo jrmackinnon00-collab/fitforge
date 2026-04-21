@@ -353,6 +353,18 @@ function ProfileScreen() {
         </div>
       </div>
 
+      {/* Replay Tour */}
+      <button
+        onClick={async () => {
+          await setDoc(doc(db, 'users', user.uid, 'profile', 'data'), { tourCompleted: false }, { merge: true })
+          updateProfile({ tourCompleted: false })
+          navigate('/dashboard')
+        }}
+        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-semibold text-sm min-h-[56px] active:scale-95 transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+      >
+        Replay App Tour
+      </button>
+
       {/* Logout */}
       <button
         onClick={handleLogout}
