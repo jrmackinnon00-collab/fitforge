@@ -179,6 +179,32 @@ function formatDisplayDate(iso) {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+// ─── Coaching hint logic ─────────────────────────────────────────────────────
+// Returns { type: 'go' | 'warn', text } or null if not enough data / no clear signal.
+function computeCoachingHint(history, plannedReps) {
+  if (!history || history.length < 2) return null
+
+  const recent = history.slice(0, 2)
+  const avgRecentRPE = recent.reduce((s, h) => s + h.avgRPE, 0) / recent.length
+
+  const weights = history.map((h) => h.maxWeight).filter((w) => w > 0)
+  const weightStalled = weights.length >= 3 && weights[0] === weights[1] && weights[1] === weights[2]
+
+  const repTarget = plannedReps ? parseInt(String(plannedReps).split('-').pop()) || null : null
+  const hittingRepTarget = repTarget ? recent.every((h) => h.avgReps >= repTarget) : false
+
+  if (avgRecentRPE >= 9) {
+    return { type: 'warn', text: `High effort lately (avg RPE ${avgRecentRPE.toFixed(1)}) — consider holding at this weight` }
+  }
+  if (avgRecentRPE <= 6.5 && (hittingRepTarget || weightStalled)) {
+    return { type: 'go', text: `Feeling easy (avg RPE ${avgRecentRPE.toFixed(1)}) — ready to add weight` }
+  }
+  if (avgRecentRPE <= 7.5 && hittingRepTarget && weights.length >= 2 && weights[0] === weights[1]) {
+    return { type: 'go', text: `Hitting your rep target consistently — try bumping the weight` }
+  }
+  return null
+}
+
 // ─── LogWorkout ───────────────────────────────────────────────────────────────
 function LogWorkout() {
   const { user } = useAuthStore()
@@ -210,6 +236,7 @@ function LogWorkout() {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [previousPerformance, setPreviousPerformance] = useState({})
+  const [coachingHistory, setCoachingHistory] = useState({})
   const [elapsedMinutes, setElapsedMinutes] = useState(
     restoredDraft ? Math.floor((Date.now() - restoredDraft.startTime) / 60000) : 0
   )
@@ -304,32 +331,50 @@ function LogWorkout() {
 
   const fetchPreviousPerformance = async (exerciseNames) => {
     try {
+      // Single query for all exercises — much cheaper than one query per exercise
+      const sessionsRef = collection(db, 'users', user.uid, 'sessions')
+      const q = query(sessionsRef, orderBy('date', 'desc'), limit(30))
+      const snap = await getDocs(q)
+      const recentSessions = snap.docs.map((d) => d.data())
+
       const perf = {}
+      const coaching = {}  // exerciseName → last-5 occurrence summaries
+
       for (const name of exerciseNames) {
-        const sessionsRef = collection(db, 'users', user.uid, 'sessions')
-        const q = query(sessionsRef, orderBy('date', 'desc'), limit(10))
-        const snap = await getDocs(q)
-        for (const doc of snap.docs) {
-          const session = doc.data()
-          const ex = session.exercises?.find(
-            (e) => e.name?.toLowerCase() === name?.toLowerCase()
-          )
-          if (ex && ex.sets?.length > 0) {
-            // Store the last 3 sets as structured data so the UI can render them individually
-            const last3 = ex.sets.slice(-3)
+        const nameLower = name.toLowerCase()
+        const occurrences = []
+
+        for (const session of recentSessions) {
+          const ex = session.exercises?.find((e) => e.name?.toLowerCase() === nameLower)
+          if (!ex?.sets?.length) continue
+
+          const completedSets = ex.sets.filter((s) => s.reps !== '' && s.reps != null)
+          if (!completedSets.length) continue
+
+          // Previous performance display: use most recent occurrence
+          if (!perf[name]) {
             perf[name] = {
               date: session.date,
-              sets: last3.map((s) => ({
-                reps: s.reps,
-                weight: s.weight,
-                rpe: s.rpe,
-              })),
+              sets: completedSets.slice(-3).map((s) => ({ reps: s.reps, weight: s.weight, rpe: s.rpe })),
             }
-            break
           }
+
+          // Coaching: summarise this occurrence
+          occurrences.push({
+            date: session.date,
+            avgRPE: completedSets.reduce((s, st) => s + (parseFloat(st.rpe) || 7), 0) / completedSets.length,
+            maxWeight: Math.max(...completedSets.map((s) => parseFloat(s.weight) || 0)),
+            avgReps: completedSets.reduce((s, st) => s + (parseInt(st.reps) || 0), 0) / completedSets.length,
+          })
+
+          if (occurrences.length >= 5) break
         }
+
+        if (occurrences.length >= 2) coaching[name] = occurrences
       }
+
       setPreviousPerformance(perf)
+      setCoachingHistory(coaching)
     } catch (err) {
       console.error('Error fetching previous performance:', err)
     }
@@ -620,6 +665,21 @@ function LogWorkout() {
                       </div>
                     </div>
                   )}
+                  {/* Coaching hint */}
+                  {(() => {
+                    const hint = computeCoachingHint(coachingHistory[exercise.name], exercise.plannedReps)
+                    if (!hint) return null
+                    return (
+                      <div className={`mt-2 flex items-start gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium ${
+                        hint.type === 'go'
+                          ? 'bg-green-500/10 text-green-500'
+                          : 'bg-amber-500/10 text-amber-500'
+                      }`}>
+                        <span>{hint.type === 'go' ? '↑' : '⚠'}</span>
+                        <span>{hint.text}</span>
+                      </div>
+                    )
+                  })()}
                 </div>
                 <div className="flex items-center gap-1">
                   {/* Technique info button */}

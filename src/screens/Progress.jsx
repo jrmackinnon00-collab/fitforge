@@ -8,7 +8,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
-import { Trash2, Pencil } from 'lucide-react'
+import { Trash2, Pencil, Download } from 'lucide-react'
 import WorkoutDetailSheet from '../components/WorkoutDetailSheet'
 import EditSessionSheet from '../components/EditSessionSheet'
 import CalendarHeatmap from 'react-calendar-heatmap'
@@ -190,6 +190,47 @@ function Progress() {
 
   const unit = profile.weightUnit || 'lbs'
 
+  const handleExportCSV = () => {
+    const header = ['Date', 'Plan', 'Day', `Duration (min)`, 'Exercise', 'Set #', 'Reps', `Weight (${unit})`, 'RPE', 'Session Notes']
+    const rows = [header]
+    ;[...sessions].reverse().forEach((s) => {
+      const sessionNotes = s.notes || ''
+      if (!s.exercises?.length) {
+        rows.push([s.date, s.planName || '', s.dayLabel || '', s.duration || '', '', '', '', '', '', sessionNotes])
+        return
+      }
+      s.exercises.forEach((ex) => {
+        const sets = ex.sets?.filter((st) => st.reps !== '' || st.weight !== '') ?? []
+        if (!sets.length) {
+          rows.push([s.date, s.planName || '', s.dayLabel || '', s.duration || '', ex.name, '', '', '', '', sessionNotes])
+          return
+        }
+        sets.forEach((set, si) => {
+          rows.push([
+            s.date,
+            s.planName || '',
+            s.dayLabel || '',
+            s.duration || '',
+            ex.name,
+            si + 1,
+            set.reps ?? '',
+            set.weight ?? '',
+            set.rpe ?? '',
+            si === 0 ? sessionNotes : '',
+          ])
+        })
+      })
+    })
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `fitforge-workouts-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const chartTooltipStyle = {
     backgroundColor: '#1E293B',
     border: '1px solid #334155',
@@ -312,9 +353,19 @@ function Progress() {
           {/* Workout History */}
           {sessions.length > 0 && (
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white mb-3">
-                Workout History
-              </h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Workout History
+                </h2>
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-orange-500 transition-colors py-1 px-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                  title="Export all workouts to CSV"
+                >
+                  <Download size={13} />
+                  Export CSV
+                </button>
+              </div>
               <div className="space-y-2">
                 {[...sessions].reverse().map((session) => (
                   <div
