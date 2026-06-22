@@ -5,12 +5,13 @@ import { db } from '../firebase'
 import useAuthStore from '../store/useAuthStore'
 import useProfileStore from '../store/useProfileStore'
 import useThemeStore from '../store/useThemeStore'
+import useWorkoutDraftStore from '../store/useWorkoutDraftStore'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { FPToast } from '../components/FPToast'
 import { BadgeUnlockModal } from '../components/BadgeUnlockModal'
 import { RankUpModal } from '../components/RankUpModal'
 import { useGamification } from '../hooks/useGamification'
-import { Plus, ChevronDown, ChevronUp, Check, Clock, Calendar, Info, X, Youtube } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Check, Clock, Calendar, Info, X, Youtube, Trash2 } from 'lucide-react'
 import { exercises as exerciseLibrary } from '../data/exercises'
 
 // ─── Exercise library lookup (mirrors PlanEditor) ─────────────────────────────
@@ -183,24 +184,38 @@ function LogWorkout() {
   const { user } = useAuthStore()
   const { profile } = useProfileStore()
   const { syncRankTheme } = useThemeStore()
+  const { draft: storedDraft, saveDraft, clearDraft } = useWorkoutDraftStore()
   const navigate = useNavigate()
-  const startTimeRef = useRef(Date.now())
-  const dateInputRef = useRef(null)
   const { processSession } = useGamification(user?.uid)
 
-  const [date, setDate] = useState(todayLocal())
+  // Restore an in-progress draft for this user (evaluated once at mount)
+  const restoredDraft = storedDraft?.userId === user?.uid ? storedDraft : null
+  // Prevents the plan-exercise effect from overwriting restored exercises (cleared after first fire)
+  const skipExercisePopulateRef = useRef(!!restoredDraft)
+  // Prevents fetchPlans from overriding the draft's plan selection (cleared after fetchPlans runs)
+  const skipPlanAutoSelectRef = useRef(!!restoredDraft)
+  // Names of draft exercises, used to prefetch previous performance on resume
+  const draftExerciseNamesRef = useRef(restoredDraft?.exercises?.map((e) => e.name) ?? null)
+
+  const startTimeRef = useRef(restoredDraft?.startTime ?? Date.now())
+  const dateInputRef = useRef(null)
+
+  const [date, setDate] = useState(restoredDraft?.date ?? todayLocal())
   const [plans, setPlans] = useState([])
-  const [selectedPlanId, setSelectedPlanId] = useState('')
-  const [selectedDayIndex, setSelectedDayIndex] = useState(0)
-  const [exercises, setExercises] = useState([])
+  const [selectedPlanId, setSelectedPlanId] = useState(restoredDraft?.selectedPlanId ?? '')
+  const [selectedDayIndex, setSelectedDayIndex] = useState(restoredDraft?.selectedDayIndex ?? 0)
+  const [exercises, setExercises] = useState(restoredDraft?.exercises ?? [])
   const [expandedExercise, setExpandedExercise] = useState(null)
-  const [sessionNotes, setSessionNotes] = useState('')
+  const [sessionNotes, setSessionNotes] = useState(restoredDraft?.sessionNotes ?? '')
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [previousPerformance, setPreviousPerformance] = useState({})
-  const [elapsedMinutes, setElapsedMinutes] = useState(0)
+  const [elapsedMinutes, setElapsedMinutes] = useState(
+    restoredDraft ? Math.floor((Date.now() - restoredDraft.startTime) / 60000) : 0
+  )
   const [showRPEInfo, setShowRPEInfo] = useState(false)
   const [techniqueExercise, setTechniqueExercise] = useState(null)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
   // Gamification reward state
   const [fpEvents, setFpEvents] = useState([])
@@ -218,6 +233,15 @@ function LogWorkout() {
   }, [user])
 
   useEffect(() => {
+    // On first load after a draft restore, keep the draft exercises as-is
+    if (skipExercisePopulateRef.current) {
+      skipExercisePopulateRef.current = false
+      if (draftExerciseNamesRef.current) {
+        fetchPreviousPerformance(draftExerciseNamesRef.current)
+        draftExerciseNamesRef.current = null
+      }
+      return
+    }
     if (selectedPlanId && plans.length > 0) {
       const plan = plans.find((p) => p.id === selectedPlanId)
       if (plan?.days?.[selectedDayIndex]) {
@@ -236,6 +260,20 @@ function LogWorkout() {
     }
   }, [selectedPlanId, selectedDayIndex, plans])
 
+  // Persist draft to localStorage on every meaningful change
+  useEffect(() => {
+    if (loading || !user || exercises.length === 0) return
+    saveDraft({
+      userId: user.uid,
+      date,
+      selectedPlanId,
+      selectedDayIndex,
+      exercises,
+      sessionNotes,
+      startTime: startTimeRef.current,
+    })
+  }, [date, selectedPlanId, selectedDayIndex, exercises, sessionNotes, loading, user, saveDraft])
+
   const fetchPlans = async () => {
     setLoading(true)
     try {
@@ -246,11 +284,16 @@ function LogWorkout() {
         .filter((p) => !p.archived)
       setPlans(planList)
 
-      const activePlan = planList.find((p) => p.isActive)
-      if (activePlan) {
-        setSelectedPlanId(activePlan.id)
-      } else if (planList.length > 0) {
-        setSelectedPlanId(planList[0].id)
+      // Don't override plan selection when resuming a draft
+      if (skipPlanAutoSelectRef.current) {
+        skipPlanAutoSelectRef.current = false
+      } else {
+        const activePlan = planList.find((p) => p.isActive)
+        if (activePlan) {
+          setSelectedPlanId(activePlan.id)
+        } else if (planList.length > 0) {
+          setSelectedPlanId(planList[0].id)
+        }
       }
     } catch (err) {
       console.error('Error fetching plans:', err)
@@ -319,6 +362,13 @@ function LogWorkout() {
     }
   }
 
+  const removeExercise = (exerciseIndex) => {
+    const updated = exercises.filter((_, i) => i !== exerciseIndex)
+    setExercises(updated)
+    if (expandedExercise === exerciseIndex) setExpandedExercise(null)
+    else if (expandedExercise > exerciseIndex) setExpandedExercise(expandedExercise - 1)
+  }
+
   const handleFinishWorkout = async () => {
     setSaving(true)
     try {
@@ -342,6 +392,7 @@ function LogWorkout() {
       }
 
       await addDoc(collection(db, 'users', user.uid, 'sessions'), sessionData)
+      clearDraft()
 
       // ── Gamification engine ──────────────────────────────────────────────────
       let hasBadgeModal = false
@@ -594,6 +645,14 @@ function LogWorkout() {
                       <Youtube size={15} />
                     </a>
                   )}
+                  {/* Remove exercise */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeExercise(exIndex) }}
+                    className="w-8 h-8 flex items-center justify-center text-slate-300 dark:text-slate-600 hover:text-red-400 transition-colors"
+                    title="Remove exercise"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Completed-sets badge */}
@@ -748,6 +807,31 @@ function LogWorkout() {
           </>
         )}
       </button>
+
+      {/* Discard workout */}
+      {showDiscardConfirm ? (
+        <div className="flex gap-3">
+          <button
+            onClick={() => { clearDraft(); navigate('/dashboard') }}
+            className="flex-1 py-3 rounded-2xl text-red-500 border border-red-500/30 bg-red-500/10 text-sm font-semibold active:scale-95 transition-all"
+          >
+            Yes, discard
+          </button>
+          <button
+            onClick={() => setShowDiscardConfirm(false)}
+            className="flex-1 py-3 rounded-2xl text-slate-400 border border-slate-200 dark:border-slate-700 text-sm font-semibold active:scale-95 transition-all"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowDiscardConfirm(true)}
+          className="w-full py-2 text-slate-400 text-sm font-medium text-center"
+        >
+          Discard workout
+        </button>
+      )}
 
       {/* RPE Info Sheet */}
       {showRPEInfo && <RPEPopover onClose={() => setShowRPEInfo(false)} />}
